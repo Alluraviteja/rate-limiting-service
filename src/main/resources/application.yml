@@ -19,23 +19,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-  data:
-    redis:
-      host: redis
-      port: 6379
-      connect-timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 20
-          max-idle: 5
-          min-idle: 2
-          time-between-eviction-runs: 60s
-        shutdown-timeout: 100ms
-
-app:
-  ratelimit:
-    redis:
-      failure-strategy: fail-open   # fail-open | fail-closed
+  redis:
+    host: redis
+    port: 6379
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 5
+        min-idle: 2
+      shutdown-timeout: 100ms
+      timeout: 2000ms
 
 server:
   port: 8080
