@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: rate-limiting-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rate_limiter
+    username: app_user
+    password: app_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: HikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  liquibase:
+    change-log: classpath:db/changelog/master.xml
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+  data:
+    redis:
+      host: redis
+      port: 6379
+      connect-timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 5
+          min-idle: 2
+          time-between-eviction-runs: 60s
+        shutdown-timeout: 100ms
+
+app:
+  ratelimit:
+    redis:
+      failure-strategy: fail-open   # fail-open | fail-closed
+
+server:
+  port: 8080
