@@ -8,8 +8,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,16 +18,10 @@ import java.time.Duration;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class RedisConfig {
 
-    @Value("${spring.data.redis.host}")
-    private String host;
-
-    @Value("${spring.data.redis.port}")
-    private int port;
-
-    @Value("${spring.data.redis.connect-timeout:2000ms}")
-    private Duration connectTimeout;
+    private final RedisProperties redisProperties;
 
     /**
      * Dedicated Lettuce client for Bucket4j.
@@ -37,11 +32,13 @@ public class RedisConfig {
     @Bean(destroyMethod = "shutdown")
     public RedisClient lettuceRedisClient() {
         RedisURI uri = RedisURI.builder()
-                .withHost(host)
-                .withPort(port)
-                .withTimeout(connectTimeout)
+                .withHost(redisProperties.getHost())
+                .withPort(redisProperties.getPort())
+                .withTimeout(redisProperties.getConnectTimeout() != null
+                        ? redisProperties.getConnectTimeout()
+                        : Duration.ofMillis(2000))
                 .build();
-        log.info("Initializing Bucket4j Lettuce RedisClient → {}:{}", host, port);
+        log.info("Initializing Bucket4j Lettuce RedisClient → {}:{}", redisProperties.getHost(), redisProperties.getPort());
         return RedisClient.create(uri);
     }
 
