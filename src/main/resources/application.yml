@@ -33,3 +33,17 @@ spring:
 
 server:
   port: 8080
+
+app:
+  ratelimit:
+    redis:
+      failure-strategy: fail-open
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
