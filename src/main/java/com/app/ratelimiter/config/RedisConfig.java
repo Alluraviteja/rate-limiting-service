@@ -10,7 +10,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,7 +21,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RedisConfig {
 
-    private final RedisProperties redisProperties;
+    private final DataRedisProperties redisProperties;
 
     /**
      * Dedicated Lettuce client for Bucket4j.
@@ -31,12 +31,13 @@ public class RedisConfig {
      */
     @Bean(destroyMethod = "shutdown")
     public RedisClient lettuceRedisClient() {
+        Duration timeout = redisProperties.getConnectTimeout() != null
+                ? redisProperties.getConnectTimeout()
+                : Duration.ofMillis(2000);
         RedisURI uri = RedisURI.builder()
                 .withHost(redisProperties.getHost())
                 .withPort(redisProperties.getPort())
-                .withTimeout(redisProperties.getConnectTimeout() != null
-                        ? redisProperties.getConnectTimeout()
-                        : Duration.ofMillis(2000))
+                .withTimeout(timeout)
                 .build();
         log.info("Initializing Bucket4j Lettuce RedisClient → {}:{}", redisProperties.getHost(), redisProperties.getPort());
         return RedisClient.create(uri);

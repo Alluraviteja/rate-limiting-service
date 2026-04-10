@@ -113,6 +113,17 @@ src/main/java/com/app/ratelimiter/
 
 ---
 
+## API Documentation
+
+Swagger UI is available once the application is running:
+
+| URL | Description |
+|---|---|
+| `http://localhost:8080/swagger-ui.html` | Interactive Swagger UI |
+| `http://localhost:8080/v3/api-docs` | OpenAPI JSON spec |
+
+---
+
 ## API Overview
 
 | Method | Endpoint | Role | Description |
