@@ -22,22 +22,23 @@ public class RateLimitLogServiceImpl implements RateLimitLogService {
 
     @Override
     @Transactional
-    public void log(String appId, String clientIp, boolean wasBlocked, String reason) {
+    public void log(Long appInfoId, String clientIp, boolean wasBlocked, String reason, String httpMethod) {
         RateLimitLog entry = RateLimitLog.builder()
-                .appId(appId)
+                .appInfoId(appInfoId)
                 .clientIp(clientIp)
                 .wasBlocked(wasBlocked)
                 .reason(reason)
+                .httpMethod(httpMethod)
                 .build();
         logRepository.save(entry);
-        log.debug("Audit log saved: appId={}, clientIp={}, blocked={}", appId, clientIp, wasBlocked);
+        log.debug("Audit log saved: appInfoId={}, clientIp={}, blocked={}, method={}", appInfoId, clientIp, wasBlocked, httpMethod);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RateLimitLogResponse> getLogs(String appId, Pageable pageable) {
-        if (appId != null && !appId.isBlank()) {
-            return logRepository.findByAppId(appId, pageable).map(mapper::toResponse);
+    public Page<RateLimitLogResponse> getLogs(Long appInfoId, Pageable pageable) {
+        if (appInfoId != null) {
+            return logRepository.findByAppInfoId(appInfoId, pageable).map(mapper::toResponse);
         }
         return logRepository.findAll(pageable).map(mapper::toResponse);
     }

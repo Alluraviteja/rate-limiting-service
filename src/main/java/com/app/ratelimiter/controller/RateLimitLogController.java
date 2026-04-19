@@ -38,8 +38,8 @@ public class RateLimitLogController {
     })
     @GetMapping
     public ResponseEntity<PageResponse<RateLimitLogResponse>> getLogs(
-            @Parameter(description = "Filter logs by appId (optional)") @RequestParam(required = false) String appId,
+            @Parameter(description = "Filter logs by app_info.id (optional)") @RequestParam(required = false) Long appInfoId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return ResponseEntity.ok(PageResponse.from(logService.getLogs(appId, pageable)));
+        return ResponseEntity.ok(PageResponse.from(logService.getLogs(appInfoId, pageable)));
     }
 }

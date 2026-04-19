@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface RateLimitLogService {
 
-    void log(String appId, String clientIp, boolean wasBlocked, String reason);
+    void log(Long appInfoId, String clientIp, boolean wasBlocked, String reason, String httpMethod);
 
-    Page<RateLimitLogResponse> getLogs(String appId, Pageable pageable);
+    Page<RateLimitLogResponse> getLogs(Long appInfoId, Pageable pageable);
 }

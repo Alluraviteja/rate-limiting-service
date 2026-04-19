@@ -4,7 +4,14 @@ import org.springframework.http.HttpStatus;
 
 public class RateLimitExceededException extends AppException {
 
-    public RateLimitExceededException(String message) {
+    private final long retryAfterSeconds;
+
+    public RateLimitExceededException(String message, long retryAfterSeconds) {
         super(message, HttpStatus.TOO_MANY_REQUESTS);
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+
+    public long getRetryAfterSeconds() {
+        return retryAfterSeconds;
     }
 }

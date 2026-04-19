@@ -5,9 +5,12 @@ import com.app.ratelimiter.dto.response.RateLimitPlanResponse;
 import com.app.ratelimiter.exception.ResourceAlreadyExistsException;
 import com.app.ratelimiter.exception.ResourceNotFoundException;
 import com.app.ratelimiter.mapper.RateLimitPlanMapper;
+import com.app.ratelimiter.model.App;
 import com.app.ratelimiter.model.RateLimitPlan;
+import com.app.ratelimiter.repository.AppRepository;
 import com.app.ratelimiter.repository.RateLimitPlanRepository;
 import com.app.ratelimiter.service.RateLimitPlanService;
+import com.app.ratelimiter.service.ResolvedBucketConfig;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BucketConfiguration;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +19,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.AntPathMatcher;
 
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -25,19 +31,29 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class RateLimitPlanServiceImpl implements RateLimitPlanService {
 
-    private final RateLimitPlanRepository planRepository;
-    private final RateLimitPlanMapper mapper;
+    private static final String DEFAULT_PATH_PATTERN = "/**";
 
+    private final RateLimitPlanRepository planRepository;
+    private final AppRepository appRepository;
+    private final RateLimitPlanMapper mapper;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    private final ConcurrentHashMap<Long, List<RateLimitPlan>> planListCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, BucketConfiguration> bucketConfigCache = new ConcurrentHashMap<>();
 
     @Override
     @Transactional
     public RateLimitPlanResponse create(RateLimitPlanRequest request) {
-        if (planRepository.existsByAppId(request.appId())) {
-            throw new ResourceAlreadyExistsException("Plan already exists for appId: " + request.appId());
+        App app = appRepository.findByAppId(request.appId())
+                .orElseThrow(() -> new ResourceNotFoundException("App not found with appId: " + request.appId()));
+        String pathPattern = request.pathPattern() != null ? request.pathPattern() : DEFAULT_PATH_PATTERN;
+        if (planRepository.existsByAppInfoIdAndPathPattern(app.getId(), pathPattern)) {
+            throw new ResourceAlreadyExistsException(
+                    "Plan already exists for appId: " + request.appId() + " and pathPattern: " + pathPattern);
         }
-        RateLimitPlan saved = planRepository.save(mapper.toEntity(request));
-        log.info("Plan created for appId={}", saved.getAppId());
+        RateLimitPlan saved = planRepository.save(mapper.toEntity(request, app.getId()));
+        planListCache.remove(app.getId());
+        log.info("Plan created for appId={}, appInfoId={}, pathPattern={}", request.appId(), app.getId(), pathPattern);
         return mapper.toResponse(saved);
     }
 
@@ -57,12 +73,12 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     @Transactional
     public RateLimitPlanResponse update(Long id, RateLimitPlanRequest request) {
         RateLimitPlan plan = findById(id);
+        evictCache(plan.getAppInfoId(), plan.getPathPattern());
         plan.setCapacity(request.capacity());
         plan.setRefillRate(request.refillRate());
         plan.setRefillPeriodSeconds(request.refillPeriodSeconds());
         plan.setDescription(request.description());
-        bucketConfigCache.remove(plan.getAppId());
-        log.info("Plan updated for appId={}", plan.getAppId());
+        log.info("Plan updated for appInfoId={}, pathPattern={}", plan.getAppInfoId(), plan.getPathPattern());
         return mapper.toResponse(planRepository.save(plan));
     }
 
@@ -70,15 +86,37 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     @Transactional
     public void delete(Long id) {
         RateLimitPlan plan = findById(id);
-        bucketConfigCache.remove(plan.getAppId());
+        evictCache(plan.getAppInfoId(), plan.getPathPattern());
         planRepository.delete(plan);
-        log.info("Plan deleted for appId={}", plan.getAppId());
+        log.info("Plan deleted for appInfoId={}, pathPattern={}", plan.getAppInfoId(), plan.getPathPattern());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public BucketConfiguration getBucketConfiguration(String appId) {
-        return bucketConfigCache.computeIfAbsent(appId, this::buildBucketConfiguration);
+    public ResolvedBucketConfig getBucketConfiguration(Long appInfoId, String requestPath) {
+        String path = requestPath != null ? requestPath : DEFAULT_PATH_PATTERN;
+        List<RateLimitPlan> plans = planListCache.computeIfAbsent(appInfoId,
+                key -> planRepository.findAllByAppInfoIdAndEnabledTrue(key));
+
+        if (plans.isEmpty()) {
+            log.debug("No active plans for appInfoId={}, allowing request", appInfoId);
+            return ResolvedBucketConfig.noMatch();
+        }
+
+        Comparator<String> specificity = pathMatcher.getPatternComparator(path);
+        RateLimitPlan matched = plans.stream()
+                .filter(p -> pathMatcher.match(p.getPathPattern(), path))
+                .min((a, b) -> specificity.compare(a.getPathPattern(), b.getPathPattern()))
+                .orElse(null);
+
+        if (matched == null) {
+            log.debug("No matching plan for appInfoId={}, path={}, allowing request", appInfoId, path);
+            return ResolvedBucketConfig.noMatch();
+        }
+
+        String cacheKey = appInfoId + ":" + matched.getPathPattern();
+        BucketConfiguration config = bucketConfigCache.computeIfAbsent(cacheKey, k -> buildConfig(matched));
+        return new ResolvedBucketConfig(config, matched.getPathPattern());
     }
 
     private RateLimitPlan findById(Long id) {
@@ -86,14 +124,17 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found with id: " + id));
     }
 
-    private BucketConfiguration buildBucketConfiguration(String appId) {
-        RateLimitPlan plan = planRepository.findByAppIdAndEnabledTrue(appId)
-                .orElseThrow(() -> new ResourceNotFoundException("No active plan for appId: " + appId));
+    private BucketConfiguration buildConfig(RateLimitPlan plan) {
         return BucketConfiguration.builder()
                 .addLimit(Bandwidth.builder()
                         .capacity(plan.getCapacity())
                         .refillGreedy(plan.getRefillRate(), Duration.ofSeconds(plan.getRefillPeriodSeconds()))
                         .build())
                 .build();
+    }
+
+    private void evictCache(Long appInfoId, String pathPattern) {
+        planListCache.remove(appInfoId);
+        bucketConfigCache.remove(appInfoId + ":" + pathPattern);
     }
 }

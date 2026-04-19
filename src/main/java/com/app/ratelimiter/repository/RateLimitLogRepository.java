@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RateLimitLogRepository extends JpaRepository<RateLimitLog, Long> {
 
-    Page<RateLimitLog> findByAppId(String appId, Pageable pageable);
+    Page<RateLimitLog> findByAppInfoId(Long appInfoId, Pageable pageable);
 }

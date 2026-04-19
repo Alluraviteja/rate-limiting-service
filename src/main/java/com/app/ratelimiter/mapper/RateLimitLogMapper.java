@@ -10,10 +10,11 @@ public class RateLimitLogMapper {
     public RateLimitLogResponse toResponse(RateLimitLog entity) {
         return new RateLimitLogResponse(
                 entity.getId(),
-                entity.getAppId(),
+                entity.getAppInfoId(),
                 entity.getClientIp(),
                 entity.getWasBlocked(),
                 entity.getReason(),
+                entity.getHttpMethod(),
                 entity.getCreatedAt()
         );
     }

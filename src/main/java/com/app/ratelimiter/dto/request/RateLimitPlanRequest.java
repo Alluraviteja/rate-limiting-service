@@ -11,6 +11,9 @@ public record RateLimitPlanRequest(
         @Schema(description = "Unique application identifier this plan applies to", example = "payments-service")
         @NotBlank @Size(max = 255) String appId,
 
+        @Schema(description = "Ant-style path pattern this plan applies to. Null defaults to /**.", example = "/resources")
+        @Size(max = 500) String pathPattern,
+
         @Schema(description = "Maximum number of tokens the bucket can hold", example = "100")
         @Positive @Max(1_000_000) int capacity,
 

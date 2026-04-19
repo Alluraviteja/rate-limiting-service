@@ -2,7 +2,6 @@ package com.app.ratelimiter.service;
 
 import com.app.ratelimiter.dto.request.RateLimitPlanRequest;
 import com.app.ratelimiter.dto.response.RateLimitPlanResponse;
-import io.github.bucket4j.BucketConfiguration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,5 +17,5 @@ public interface RateLimitPlanService {
 
     void delete(Long id);
 
-    BucketConfiguration getBucketConfiguration(String appId);
+    ResolvedBucketConfig getBucketConfiguration(Long appInfoId, String requestPath);
 }
