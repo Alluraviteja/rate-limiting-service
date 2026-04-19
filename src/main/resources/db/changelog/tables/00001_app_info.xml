@@ -12,11 +12,11 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
 
-            <column name="app_id" type="VARCHAR(255)">
+            <column name="service_name" type="VARCHAR(255)">
                 <constraints nullable="false" unique="true"/>
             </column>
 
-            <column name="port" type="INT">
+            <column name="service_url" type="VARCHAR(500)">
                 <constraints nullable="false" unique="true"/>
             </column>
 

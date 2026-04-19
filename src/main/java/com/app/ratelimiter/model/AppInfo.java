@@ -14,17 +14,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class App extends BaseAuditEntity {
+public class AppInfo extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "app_id", nullable = false, unique = true, length = 255)
-    private String appId;
+    @Column(name = "service_name", nullable = false, unique = true, length = 255)
+    private String serviceName;
 
-    @Column(name = "port", nullable = false, unique = true)
-    private Integer port;
+    @Column(name = "service_url", nullable = false, unique = true, length = 500)
+    private String serviceUrl;
 
     @Column(name = "description", length = 1000)
     private String description;

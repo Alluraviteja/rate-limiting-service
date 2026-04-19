@@ -5,7 +5,7 @@ import com.app.ratelimiter.dto.response.AppResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface AppService {
+public interface AppInfoService {
 
     AppResponse create(AppRequest request);
 

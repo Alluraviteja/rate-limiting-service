@@ -8,8 +8,11 @@ import java.time.Instant;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Result of a rate limit check for an application")
 public record RateLimitCheckResponse(
-        @Schema(description = "Application identifier that was checked", example = "payments-service")
-        String appId,
+        @Schema(description = "Service name that was checked", example = "payments-service")
+        String serviceName,
+
+        @Schema(description = "Full URL of the service for the API gateway to forward the request to", example = "http://payments-service:8081")
+        String serviceUrl,
 
         @Schema(description = "Whether the request was allowed to proceed", example = "true")
         boolean allowed,
