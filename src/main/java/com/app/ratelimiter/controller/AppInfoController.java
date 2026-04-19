@@ -4,7 +4,7 @@ import com.app.ratelimiter.dto.request.AppRequest;
 import com.app.ratelimiter.dto.response.AppResponse;
 import com.app.ratelimiter.dto.response.ErrorResponse;
 import com.app.ratelimiter.dto.response.PageResponse;
-import com.app.ratelimiter.service.AppService;
+import com.app.ratelimiter.service.AppInfoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,22 +31,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/apps")
 @RequiredArgsConstructor
-public class AppController {
+public class AppInfoController {
 
-    private final AppService appService;
+    private final AppInfoService appInfoService;
 
-    @Operation(summary = "Register an app", description = "Registers a new application. The appId must be unique.")
+    @Operation(summary = "Register an app", description = "Registers a new application. The serviceName and serviceUrl must be unique.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "App registered successfully",
                     content = @Content(schema = @Schema(implementation = AppResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "App already registered with this appId",
+            @ApiResponse(responseCode = "409", description = "App already registered with this serviceName or serviceUrl",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<AppResponse> create(@Valid @RequestBody AppRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(appService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(appInfoService.create(request));
     }
 
     @Operation(summary = "List all apps", description = "Returns a paginated list of all registered applications.")
@@ -54,7 +54,7 @@ public class AppController {
     @GetMapping
     public ResponseEntity<PageResponse<AppResponse>> getAll(
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return ResponseEntity.ok(PageResponse.from(appService.getAll(pageable)));
+        return ResponseEntity.ok(PageResponse.from(appInfoService.getAll(pageable)));
     }
 
     @Operation(summary = "Get an app by ID", description = "Returns the registered application with the given ID.")
@@ -67,10 +67,10 @@ public class AppController {
     @GetMapping("/{id}")
     public ResponseEntity<AppResponse> getById(
             @Parameter(description = "App record ID", required = true) @PathVariable Long id) {
-        return ResponseEntity.ok(appService.getById(id));
+        return ResponseEntity.ok(appInfoService.getById(id));
     }
 
-    @Operation(summary = "Update an app", description = "Updates the description of a registered application. The appId cannot be changed.")
+    @Operation(summary = "Update an app", description = "Updates the description of a registered application. The serviceName cannot be changed.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "App updated successfully",
                     content = @Content(schema = @Schema(implementation = AppResponse.class))),
@@ -83,10 +83,10 @@ public class AppController {
     public ResponseEntity<AppResponse> update(
             @Parameter(description = "App record ID", required = true) @PathVariable Long id,
             @Valid @RequestBody AppRequest request) {
-        return ResponseEntity.ok(appService.update(id, request));
+        return ResponseEntity.ok(appInfoService.update(id, request));
     }
 
-    @Operation(summary = "Delete an app", description = "Removes an application from the registry. Existing rate limit plans and logs are unaffected as there is no foreign key constraint.")
+    @Operation(summary = "Delete an app", description = "Removes an application from the registry.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "App deleted successfully"),
             @ApiResponse(responseCode = "404", description = "App not found",
@@ -95,7 +95,7 @@ public class AppController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @Parameter(description = "App record ID", required = true) @PathVariable Long id) {
-        appService.delete(id);
+        appInfoService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

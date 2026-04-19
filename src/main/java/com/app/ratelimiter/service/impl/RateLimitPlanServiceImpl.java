@@ -5,9 +5,9 @@ import com.app.ratelimiter.dto.response.RateLimitPlanResponse;
 import com.app.ratelimiter.exception.ResourceAlreadyExistsException;
 import com.app.ratelimiter.exception.ResourceNotFoundException;
 import com.app.ratelimiter.mapper.RateLimitPlanMapper;
-import com.app.ratelimiter.model.App;
+import com.app.ratelimiter.model.AppInfo;
 import com.app.ratelimiter.model.RateLimitPlan;
-import com.app.ratelimiter.repository.AppRepository;
+import com.app.ratelimiter.repository.AppInfoRepository;
 import com.app.ratelimiter.repository.RateLimitPlanRepository;
 import com.app.ratelimiter.service.RateLimitPlanService;
 import com.app.ratelimiter.service.ResolvedBucketConfig;
@@ -34,7 +34,7 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     private static final String DEFAULT_PATH_PATTERN = "/**";
 
     private final RateLimitPlanRepository planRepository;
-    private final AppRepository appRepository;
+    private final AppInfoRepository appInfoRepository;
     private final RateLimitPlanMapper mapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -44,16 +44,16 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     @Override
     @Transactional
     public RateLimitPlanResponse create(RateLimitPlanRequest request) {
-        App app = appRepository.findByAppId(request.appId())
-                .orElseThrow(() -> new ResourceNotFoundException("App not found with appId: " + request.appId()));
+        AppInfo app = appInfoRepository.findByServiceNameOrPort(request.serviceName())
+                .orElseThrow(() -> new ResourceNotFoundException("App not found with serviceName: " + request.serviceName()));
         String pathPattern = request.pathPattern() != null ? request.pathPattern() : DEFAULT_PATH_PATTERN;
         if (planRepository.existsByAppInfoIdAndPathPattern(app.getId(), pathPattern)) {
             throw new ResourceAlreadyExistsException(
-                    "Plan already exists for appId: " + request.appId() + " and pathPattern: " + pathPattern);
+                    "Plan already exists for serviceName: " + request.serviceName() + " and pathPattern: " + pathPattern);
         }
         RateLimitPlan saved = planRepository.save(mapper.toEntity(request, app.getId()));
         planListCache.remove(app.getId());
-        log.info("Plan created for appId={}, appInfoId={}, pathPattern={}", request.appId(), app.getId(), pathPattern);
+        log.info("Plan created for serviceName={}, appInfoId={}, pathPattern={}", request.serviceName(), app.getId(), pathPattern);
         return mapper.toResponse(saved);
     }
 

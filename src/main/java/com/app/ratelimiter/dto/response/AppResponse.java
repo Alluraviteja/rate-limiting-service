@@ -9,11 +9,11 @@ public record AppResponse(
         @Schema(description = "Unique record ID", example = "1")
         Long id,
 
-        @Schema(description = "Unique application identifier", example = "payments-service")
-        String appId,
+        @Schema(description = "Unique service name identifier", example = "payments-service")
+        String serviceName,
 
-        @Schema(description = "Port the application runs on", example = "8081")
-        Integer port,
+        @Schema(description = "Full URL where the service is running", example = "http://personal-website:8080")
+        String serviceUrl,
 
         @Schema(description = "Optional description of the application", example = "Handles all payment transactions")
         String description,

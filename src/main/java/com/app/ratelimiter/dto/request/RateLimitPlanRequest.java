@@ -8,8 +8,8 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Configuration for a per-app token bucket rate limit plan")
 public record RateLimitPlanRequest(
-        @Schema(description = "Unique application identifier this plan applies to", example = "payments-service")
-        @NotBlank @Size(max = 255) String appId,
+        @Schema(description = "Service name this plan applies to", example = "payments-service")
+        @NotBlank @Size(max = 255) String serviceName,
 
         @Schema(description = "Ant-style path pattern this plan applies to. Null defaults to /**.", example = "/resources")
         @Size(max = 500) String pathPattern,

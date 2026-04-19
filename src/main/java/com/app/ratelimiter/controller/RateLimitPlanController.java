@@ -35,7 +35,7 @@ public class RateLimitPlanController {
 
     private final RateLimitPlanService planService;
 
-    @Operation(summary = "Create a plan", description = "Creates a new rate limit plan for an app. appId must be unique.")
+    @Operation(summary = "Create a plan", description = "Creates a new rate limit plan for an app. serviceName must match a registered app.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Plan created successfully",
                     content = @Content(schema = @Schema(implementation = RateLimitPlanResponse.class))),
@@ -45,7 +45,7 @@ public class RateLimitPlanController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "Insufficient role — requires ROLE_ADMIN",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "A plan already exists for the given appId",
+            @ApiResponse(responseCode = "409", description = "A plan already exists for the given serviceName",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
