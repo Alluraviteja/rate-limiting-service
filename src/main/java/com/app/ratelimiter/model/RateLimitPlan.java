@@ -20,8 +20,11 @@ public class RateLimitPlan extends BaseAuditEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "app_id", nullable = false, unique = true)
-    private String appId;
+    @Column(name = "app_info_id", nullable = false)
+    private Long appInfoId;
+
+    @Column(name = "path_pattern", nullable = false, length = 500)
+    private String pathPattern;
 
     @Column(name = "capacity", nullable = false)
     private Integer capacity;

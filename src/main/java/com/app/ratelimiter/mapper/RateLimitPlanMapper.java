@@ -8,9 +8,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class RateLimitPlanMapper {
 
-    public RateLimitPlan toEntity(RateLimitPlanRequest request) {
+    private static final String DEFAULT_PATH_PATTERN = "/**";
+
+    public RateLimitPlan toEntity(RateLimitPlanRequest request, Long appInfoId) {
         return RateLimitPlan.builder()
-                .appId(request.appId())
+                .appInfoId(appInfoId)
+                .pathPattern(request.pathPattern() != null ? request.pathPattern() : DEFAULT_PATH_PATTERN)
                 .capacity(request.capacity())
                 .refillRate(request.refillRate())
                 .refillPeriodSeconds(request.refillPeriodSeconds())
@@ -22,7 +25,8 @@ public class RateLimitPlanMapper {
     public RateLimitPlanResponse toResponse(RateLimitPlan entity) {
         return new RateLimitPlanResponse(
                 entity.getId(),
-                entity.getAppId(),
+                entity.getAppInfoId(),
+                entity.getPathPattern(),
                 entity.getCapacity(),
                 entity.getRefillRate(),
                 entity.getRefillPeriodSeconds(),

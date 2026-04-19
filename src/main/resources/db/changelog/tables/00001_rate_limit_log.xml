@@ -6,15 +6,13 @@
            http://www.liquibase.org/xml/ns/dbchangelog
            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
-    <changeSet id="0000000000001" author="System">
+    <changeSet id="0000000000002" author="System">
         <createTable tableName="rate_limit_log">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
 
-            <column name="app_id" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="app_info_id" type="BIGINT"/>
 
             <column name="client_ip" type="VARCHAR(45)">
                 <constraints nullable="false"/>
@@ -25,6 +23,8 @@
             </column>
 
             <column name="reason" type="TEXT"/>
+
+            <column name="http_method" type="VARCHAR(10)"/>
 
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
@@ -38,13 +38,17 @@
             <column name="client_ip"/>
         </createIndex>
 
-        <createIndex indexName="idx_app_id" tableName="rate_limit_log">
-            <column name="app_id"/>
+        <createIndex indexName="idx_app_info_id" tableName="rate_limit_log">
+            <column name="app_info_id"/>
         </createIndex>
 
         <createIndex indexName="idx_created_at" tableName="rate_limit_log">
             <column name="created_at"/>
         </createIndex>
+
+        <rollback>
+            <dropTable tableName="rate_limit_log"/>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

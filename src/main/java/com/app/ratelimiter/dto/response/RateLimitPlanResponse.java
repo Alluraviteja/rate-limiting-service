@@ -9,8 +9,11 @@ public record RateLimitPlanResponse(
         @Schema(description = "Unique plan ID", example = "1")
         Long id,
 
-        @Schema(description = "Application identifier this plan applies to", example = "payments-service")
-        String appId,
+        @Schema(description = "app_info.id reference for the app this plan applies to", example = "1")
+        Long appInfoId,
+
+        @Schema(description = "Ant-style path pattern this plan applies to", example = "/resources")
+        String pathPattern,
 
         @Schema(description = "Maximum bucket token capacity", example = "100")
         int capacity,
