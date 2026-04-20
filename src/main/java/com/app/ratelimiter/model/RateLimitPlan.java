@@ -38,6 +38,7 @@ public class RateLimitPlan extends BaseAuditEntity {
     @Column(name = "description")
     private String description;
 
+    @Builder.Default
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
 }

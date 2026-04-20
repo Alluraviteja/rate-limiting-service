@@ -29,6 +29,7 @@ public class AppInfo extends BaseAuditEntity {
     @Column(name = "description", length = 1000)
     private String description;
 
+    @Builder.Default
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = false;
 }
