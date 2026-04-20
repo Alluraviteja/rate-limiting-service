@@ -3,6 +3,7 @@ package com.app.ratelimiter.service.impl;
 import com.app.ratelimiter.dto.response.PingResponse;
 import com.app.ratelimiter.dto.response.PingResponse.ComponentStatus;
 import com.app.ratelimiter.service.PingService;
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import java.time.Instant;
 public class PingServiceImpl implements PingService {
 
     private final DataSource dataSource;
-    private final StatefulRedisConnection<String, byte[]> bucketRedisConnection;
+    private final RedisClient redisClient;
 
     @Override
     public PingResponse ping() {
@@ -41,8 +42,8 @@ public class PingServiceImpl implements PingService {
     }
 
     private ComponentStatus checkRedis() {
-        try {
-            String response = bucketRedisConnection.sync().ping();
+        try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
+            String response = conn.sync().ping();
             boolean connected = "PONG".equalsIgnoreCase(response);
             return new ComponentStatus(connected, connected ? "Connected" : "Unexpected response: " + response);
         } catch (Exception e) {
