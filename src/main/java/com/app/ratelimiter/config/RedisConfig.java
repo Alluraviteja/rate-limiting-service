@@ -67,6 +67,7 @@ public class RedisConfig {
      * the Redis key lives at least as long as it takes to fully refill the bucket,
      * preventing premature eviction of active buckets under low traffic.
      */
+    @Lazy
     @Bean
     public LettuceBasedProxyManager<String> proxyManager(
             StatefulRedisConnection<String, byte[]> bucketRedisConnection) {
