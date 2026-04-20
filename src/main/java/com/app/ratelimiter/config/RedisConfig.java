@@ -14,6 +14,7 @@ import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDeta
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.Duration;
 
@@ -46,6 +47,7 @@ public class RedisConfig {
      * Lettuce connections are thread-safe and multiplexed — one connection
      * is sufficient for high concurrency.
      */
+    @Lazy
     @Bean(destroyMethod = "close")
     public StatefulRedisConnection<String, byte[]> bucketRedisConnection(RedisClient lettuceRedisClient) {
         return lettuceRedisClient.connect(
