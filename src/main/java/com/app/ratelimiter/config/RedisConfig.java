@@ -10,6 +10,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDetails;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,25 +22,22 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RedisConfig {
 
+    private final DataRedisConnectionDetails redisConnectionDetails;
     private final DataRedisProperties redisProperties;
 
-    /**
-     * Dedicated Lettuce client for Bucket4j.
-     * Separate from Spring Data Redis's auto-configured client so that
-     * Bucket4j uses its own connection with byte[] codec (required for
-     * serialising bucket state).
-     */
     @Bean(destroyMethod = "shutdown")
     public RedisClient lettuceRedisClient() {
+        String host = redisConnectionDetails.getStandalone().getHost();
+        int port = redisConnectionDetails.getStandalone().getPort();
         Duration timeout = redisProperties.getConnectTimeout() != null
                 ? redisProperties.getConnectTimeout()
                 : Duration.ofMillis(2000);
         RedisURI uri = RedisURI.builder()
-                .withHost(redisProperties.getHost())
-                .withPort(redisProperties.getPort())
+                .withHost(host)
+                .withPort(port)
                 .withTimeout(timeout)
                 .build();
-        log.info("Initializing Bucket4j Lettuce RedisClient → {}:{}", redisProperties.getHost(), redisProperties.getPort());
+        log.info("Initializing Bucket4j Lettuce RedisClient → {}:{}", host, port);
         return RedisClient.create(uri);
     }
 
