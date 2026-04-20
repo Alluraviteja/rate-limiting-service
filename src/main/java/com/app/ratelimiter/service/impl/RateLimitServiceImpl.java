@@ -15,8 +15,8 @@ import com.app.ratelimiter.service.ResolvedBucketConfig;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.distributed.BucketProxy;
 import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,7 +24,6 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RateLimitServiceImpl implements RateLimitService {
 
     private static final String BUCKET_KEY_PREFIX = "rate_limit:";
@@ -34,6 +33,19 @@ public class RateLimitServiceImpl implements RateLimitService {
     private final AppInfoRepository appInfoRepository;
     private final LettuceBasedProxyManager<String> proxyManager;
     private final AppProperties appProperties;
+
+    public RateLimitServiceImpl(
+            RateLimitPlanService planService,
+            RateLimitLogService logService,
+            AppInfoRepository appInfoRepository,
+            @Lazy LettuceBasedProxyManager<String> proxyManager,
+            AppProperties appProperties) {
+        this.planService = planService;
+        this.logService = logService;
+        this.appInfoRepository = appInfoRepository;
+        this.proxyManager = proxyManager;
+        this.appProperties = appProperties;
+    }
 
     @Override
     public RateLimitCheckResponse check(RateLimitCheckRequest request) {
