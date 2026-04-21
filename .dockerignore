@@ -1,0 +1,19 @@
+# Version control
+.git
+.gitignore
+
+# CI/CD and IDE
+.github
+.idea
+*.iml
+
+# Documentation
+*.md
+HELP.md
+
+# Build output — rebuilt inside Docker
+target/
+
+# OS noise
+.DS_Store
+Thumbs.db
