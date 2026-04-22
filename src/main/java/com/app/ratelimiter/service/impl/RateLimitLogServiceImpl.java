@@ -22,16 +22,26 @@ public class RateLimitLogServiceImpl implements RateLimitLogService {
 
     @Override
     @Transactional
-    public void log(Long appInfoId, String clientIp, boolean wasBlocked, String reason, String httpMethod) {
+    public void log(Long appInfoId, String clientIp, boolean wasBlocked, String reason, String httpMethod,
+                    String requestPath, Long remainingTokens, String traceId,
+                    int responseCode, java.time.Instant requestAt, Long retryAfterSeconds, boolean redisFailed) {
         RateLimitLog entry = RateLimitLog.builder()
                 .appInfoId(appInfoId)
                 .clientIp(clientIp)
                 .wasBlocked(wasBlocked)
                 .reason(reason)
                 .httpMethod(httpMethod)
+                .requestPath(requestPath)
+                .remainingTokens(remainingTokens)
+                .traceId(traceId)
+                .responseCode(responseCode)
+                .requestAt(requestAt)
+                .retryAfterSeconds(retryAfterSeconds)
+                .redisFailed(redisFailed)
                 .build();
         logRepository.save(entry);
-        log.debug("Audit log saved: appInfoId={}, clientIp={}, blocked={}, method={}", appInfoId, clientIp, wasBlocked, httpMethod);
+        log.debug("Audit log saved: appInfoId={}, clientIp={}, blocked={}, responseCode={}, path={}, remaining={}, retryAfter={}s, redisFailed={}",
+                appInfoId, clientIp, wasBlocked, responseCode, requestPath, remainingTokens, retryAfterSeconds, redisFailed);
     }
 
     @Override

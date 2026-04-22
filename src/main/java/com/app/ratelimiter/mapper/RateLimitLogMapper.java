@@ -15,6 +15,13 @@ public class RateLimitLogMapper {
                 entity.getWasBlocked(),
                 entity.getReason(),
                 entity.getHttpMethod(),
+                entity.getRequestPath(),
+                entity.getRemainingTokens(),
+                entity.getTraceId(),
+                entity.getResponseCode(),
+                entity.getRequestAt(),
+                entity.getRetryAfterSeconds(),
+                entity.getRedisFailed(),
                 entity.getCreatedAt()
         );
     }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="0000000000005" author="System">
+        <addColumn tableName="rate_limit_log">
+            <column name="request_path" type="VARCHAR(500)"/>
+            <column name="remaining_tokens" type="INT"/>
+            <column name="trace_id" type="VARCHAR(64)"/>
+            <column name="response_code" type="INT"/>
+            <column name="request_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="retry_after_seconds" type="BIGINT"/>
+            <column name="redis_failed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <createIndex indexName="idx_trace_id" tableName="rate_limit_log">
+            <column name="trace_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_response_code" tableName="rate_limit_log">
+            <column name="response_code"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_response_code" tableName="rate_limit_log"/>
+            <dropIndex indexName="idx_trace_id" tableName="rate_limit_log"/>
+            <dropColumn tableName="rate_limit_log" columnName="request_path"/>
+            <dropColumn tableName="rate_limit_log" columnName="remaining_tokens"/>
+            <dropColumn tableName="rate_limit_log" columnName="trace_id"/>
+            <dropColumn tableName="rate_limit_log" columnName="response_code"/>
+            <dropColumn tableName="rate_limit_log" columnName="request_at"/>
+            <dropColumn tableName="rate_limit_log" columnName="retry_after_seconds"/>
+            <dropColumn tableName="rate_limit_log" columnName="redis_failed"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
