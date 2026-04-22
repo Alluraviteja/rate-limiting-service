@@ -1,19 +1,19 @@
 package com.app.ratelimiter.service;
 
-import com.app.ratelimiter.dto.request.AppRequest;
-import com.app.ratelimiter.dto.response.AppResponse;
+import com.app.ratelimiter.dto.request.AppInfoRequest;
+import com.app.ratelimiter.dto.response.AppInfoResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AppInfoService {
 
-    AppResponse create(AppRequest request);
+    AppInfoResponse create(AppInfoRequest request);
 
-    AppResponse getById(Long id);
+    AppInfoResponse getById(Long id);
 
-    Page<AppResponse> getAll(Pageable pageable);
+    Page<AppInfoResponse> getAll(Pageable pageable);
 
-    AppResponse update(Long id, AppRequest request);
+    AppInfoResponse update(Long id, AppInfoRequest request);
 
     void delete(Long id);
 }

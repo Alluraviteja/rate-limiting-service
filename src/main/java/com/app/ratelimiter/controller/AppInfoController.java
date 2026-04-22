@@ -1,7 +1,7 @@
 package com.app.ratelimiter.controller;
 
-import com.app.ratelimiter.dto.request.AppRequest;
-import com.app.ratelimiter.dto.response.AppResponse;
+import com.app.ratelimiter.dto.request.AppInfoRequest;
+import com.app.ratelimiter.dto.response.AppInfoResponse;
 import com.app.ratelimiter.dto.response.ErrorResponse;
 import com.app.ratelimiter.dto.response.PageResponse;
 import com.app.ratelimiter.service.AppInfoService;
@@ -38,21 +38,21 @@ public class AppInfoController {
     @Operation(summary = "Register an app", description = "Registers a new application. The serviceName and serviceUrl must be unique.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "App registered successfully",
-                    content = @Content(schema = @Schema(implementation = AppResponse.class))),
+                    content = @Content(schema = @Schema(implementation = AppInfoResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "App already registered with this serviceName or serviceUrl",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<AppResponse> create(@Valid @RequestBody AppRequest request) {
+    public ResponseEntity<AppInfoResponse> create(@Valid @RequestBody AppInfoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(appInfoService.create(request));
     }
 
     @Operation(summary = "List all apps", description = "Returns a paginated list of all registered applications.")
     @ApiResponse(responseCode = "200", description = "Page of registered apps")
     @GetMapping
-    public ResponseEntity<PageResponse<AppResponse>> getAll(
+    public ResponseEntity<PageResponse<AppInfoResponse>> getAll(
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(PageResponse.from(appInfoService.getAll(pageable)));
     }
@@ -60,12 +60,12 @@ public class AppInfoController {
     @Operation(summary = "Get an app by ID", description = "Returns the registered application with the given ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "App found",
-                    content = @Content(schema = @Schema(implementation = AppResponse.class))),
+                    content = @Content(schema = @Schema(implementation = AppInfoResponse.class))),
             @ApiResponse(responseCode = "404", description = "App not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<AppResponse> getById(
+    public ResponseEntity<AppInfoResponse> getById(
             @Parameter(description = "App record ID", required = true) @PathVariable Long id) {
         return ResponseEntity.ok(appInfoService.getById(id));
     }
@@ -73,16 +73,16 @@ public class AppInfoController {
     @Operation(summary = "Update an app", description = "Updates the description of a registered application. The serviceName cannot be changed.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "App updated successfully",
-                    content = @Content(schema = @Schema(implementation = AppResponse.class))),
+                    content = @Content(schema = @Schema(implementation = AppInfoResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "App not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
-    public ResponseEntity<AppResponse> update(
+    public ResponseEntity<AppInfoResponse> update(
             @Parameter(description = "App record ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody AppRequest request) {
+            @Valid @RequestBody AppInfoRequest request) {
         return ResponseEntity.ok(appInfoService.update(id, request));
     }
 
