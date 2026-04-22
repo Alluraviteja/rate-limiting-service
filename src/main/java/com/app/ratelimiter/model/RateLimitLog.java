@@ -2,6 +2,7 @@ package com.app.ratelimiter.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,4 +39,25 @@ public class RateLimitLog extends BaseAuditEntity {
 
     @Column(name = "http_method", length = 10)
     private String httpMethod;
+
+    @Column(name = "request_path", length = 500)
+    private String requestPath;
+
+    @Column(name = "remaining_tokens")
+    private Long remainingTokens;
+
+    @Column(name = "trace_id", length = 64)
+    private String traceId;
+
+    @Column(name = "response_code")
+    private Integer responseCode;
+
+    @Column(name = "request_at")
+    private Instant requestAt;
+
+    @Column(name = "retry_after_seconds")
+    private Long retryAfterSeconds;
+
+    @Column(name = "redis_failed", nullable = false)
+    private Boolean redisFailed;
 }

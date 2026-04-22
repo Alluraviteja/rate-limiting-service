@@ -17,5 +17,8 @@ public record RateLimitCheckRequest(
         @Size(max = 500) String requestPath,
 
         @Schema(description = "HTTP method of the incoming request. Optional, saved to audit log.", example = "POST")
-        @Size(max = 10) String httpMethod
+        @Size(max = 10) String httpMethod,
+
+        @Schema(description = "Trace or correlation ID from upstream (e.g. X-Request-ID header). Optional, saved to audit log.", example = "abc123def456")
+        @Size(max = 64) String traceId
 ) {}

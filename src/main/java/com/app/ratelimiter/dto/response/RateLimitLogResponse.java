@@ -26,6 +26,27 @@ public record RateLimitLogResponse(
         @Schema(description = "HTTP method of the request", example = "POST")
         String httpMethod,
 
-        @Schema(description = "UTC timestamp when the event was recorded")
+        @Schema(description = "Request path that was checked against rate limit plans", example = "/api/orders")
+        String requestPath,
+
+        @Schema(description = "Remaining tokens in the bucket after this request (-1 = not applicable)", example = "42")
+        Long remainingTokens,
+
+        @Schema(description = "Trace/correlation ID from the upstream request header", example = "abc123def456")
+        String traceId,
+
+        @Schema(description = "HTTP response code sent back to the caller (200, 429, 503)", example = "429")
+        Integer responseCode,
+
+        @Schema(description = "Precise timestamp when the request entered the rate limiter (before Redis evaluation)")
+        Instant requestAt,
+
+        @Schema(description = "Seconds until the next request will be allowed — only present on 429 responses", example = "14")
+        Long retryAfterSeconds,
+
+        @Schema(description = "Whether this event was caused by a Redis failure (fail-open or fail-closed)", example = "false")
+        boolean redisFailed,
+
+        @Schema(description = "UTC timestamp when the audit record was persisted")
         Instant createdAt
 ) {}
