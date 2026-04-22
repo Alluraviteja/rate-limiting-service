@@ -1,7 +1,7 @@
 package com.app.ratelimiter.service.impl;
 
-import com.app.ratelimiter.dto.request.AppRequest;
-import com.app.ratelimiter.dto.response.AppResponse;
+import com.app.ratelimiter.dto.request.AppInfoRequest;
+import com.app.ratelimiter.dto.response.AppInfoResponse;
 import com.app.ratelimiter.exception.ResourceAlreadyExistsException;
 import com.app.ratelimiter.exception.ResourceNotFoundException;
 import com.app.ratelimiter.mapper.AppInfoMapper;
@@ -25,12 +25,9 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     @Override
     @Transactional
-    public AppResponse create(AppRequest request) {
+    public AppInfoResponse create(AppInfoRequest request) {
         if (appInfoRepository.existsByServiceName(request.serviceName())) {
             throw new ResourceAlreadyExistsException("App already registered with serviceName: " + request.serviceName());
-        }
-        if (appInfoRepository.existsByServiceUrl(request.serviceUrl())) {
-            throw new ResourceAlreadyExistsException("App already registered with serviceUrl: " + request.serviceUrl());
         }
         AppInfo saved = appInfoRepository.save(mapper.toEntity(request));
         log.info("App registered with serviceName={}", saved.getServiceName());
@@ -39,20 +36,21 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     @Override
     @Transactional(readOnly = true)
-    public AppResponse getById(Long id) {
+    public AppInfoResponse getById(Long id) {
         return mapper.toResponse(findById(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AppResponse> getAll(Pageable pageable) {
+    public Page<AppInfoResponse> getAll(Pageable pageable) {
         return appInfoRepository.findAll(pageable).map(mapper::toResponse);
     }
 
     @Override
     @Transactional
-    public AppResponse update(Long id, AppRequest request) {
+    public AppInfoResponse update(Long id, AppInfoRequest request) {
         AppInfo appInfo = findById(id);
+        appInfo.setServicePort(request.servicePort());
         appInfo.setDescription(request.description());
         log.info("App updated for serviceName={}", appInfo.getServiceName());
         return mapper.toResponse(appInfoRepository.save(appInfo));

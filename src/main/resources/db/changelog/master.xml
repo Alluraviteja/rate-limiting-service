@@ -10,5 +10,6 @@
     <include file="db/changelog/tables/00001_rate_limit_plan.xml"/>
     <include file="db/changelog/tables/00001_rate_limit_log.xml"/>
     <include file="db/changelog/tables/00001_app_info.xml"/>
+    <include file="db/changelog/tables/00002_app_info_service_port.xml"/>
 
 </databaseChangeLog>

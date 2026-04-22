@@ -54,7 +54,7 @@ public class RateLimitServiceImpl implements RateLimitService {
         String requestPath = request.requestPath();
         String httpMethod = request.httpMethod();
 
-        Optional<AppInfo> appOpt = appInfoRepository.findByServiceNameOrPort(serviceIdentifier);
+        Optional<AppInfo> appOpt = findByServiceNameOrPort(serviceIdentifier);
         if (appOpt.isEmpty()) {
             log.debug("No app registered for serviceIdentifier={}, allowing request", serviceIdentifier);
             safeLog(null, clientIp, false, "No app registered for serviceIdentifier", httpMethod);
@@ -113,6 +113,18 @@ public class RateLimitServiceImpl implements RateLimitService {
         safeLog(appInfoId, clientIp, false, "Redis unavailable - fail open", httpMethod);
         log.warn("Failing open for serviceName={} due to Redis unavailability", serviceName);
         return new RateLimitCheckResponse(serviceName, serviceUrl, true, -1, "Redis unavailable - fail open", matchedPattern, Instant.now());
+    }
+
+    private Optional<AppInfo> findByServiceNameOrPort(String identifier) {
+        Optional<AppInfo> byName = appInfoRepository.findByServiceName(identifier);
+        if (byName.isPresent()) {
+            return byName;
+        }
+        try {
+            return appInfoRepository.findByServicePort(Integer.parseInt(identifier));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     private void safeLog(Long appInfoId, String clientIp, boolean wasBlocked, String reason, String httpMethod) {

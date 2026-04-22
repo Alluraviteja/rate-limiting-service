@@ -24,6 +24,7 @@ import org.springframework.util.AntPathMatcher;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -44,7 +45,7 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     @Override
     @Transactional
     public RateLimitPlanResponse create(RateLimitPlanRequest request) {
-        AppInfo app = appInfoRepository.findByServiceNameOrPort(request.serviceName())
+        AppInfo app = findByServiceNameOrPort(request.serviceName())
                 .orElseThrow(() -> new ResourceNotFoundException("App not found with serviceName: " + request.serviceName()));
         String pathPattern = request.pathPattern() != null ? request.pathPattern() : DEFAULT_PATH_PATTERN;
         if (planRepository.existsByAppInfoIdAndPathPattern(app.getId(), pathPattern)) {
@@ -117,6 +118,18 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
         String cacheKey = appInfoId + ":" + matched.getPathPattern();
         BucketConfiguration config = bucketConfigCache.computeIfAbsent(cacheKey, k -> buildConfig(matched));
         return new ResolvedBucketConfig(config, matched.getPathPattern());
+    }
+
+    private Optional<AppInfo> findByServiceNameOrPort(String identifier) {
+        Optional<AppInfo> byName = appInfoRepository.findByServiceName(identifier);
+        if (byName.isPresent()) {
+            return byName;
+        }
+        try {
+            return appInfoRepository.findByServicePort(Integer.parseInt(identifier));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     private RateLimitPlan findById(Long id) {
