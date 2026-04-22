@@ -73,6 +73,7 @@ jobs:
               --name rate-limiting-service \
               --restart always \
               --add-host=host.docker.internal:host-gateway \
+              --network ${{ secrets.DOCKER_NETWORK }} \
               -e SERVER_PORT=${{ secrets.CONTAINER_PORT }} \
               -e DB_URL=${{ secrets.DB_URL }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
@@ -97,6 +98,7 @@ jobs:
                   --name rate-limiting-service \
                   --restart always \
                   --add-host=host.docker.internal:host-gateway \
+                  --network ${{ secrets.DOCKER_NETWORK }} \
                   -e SERVER_PORT=${{ secrets.CONTAINER_PORT }} \
                   -e DB_URL=${{ secrets.DB_URL }} \
                   -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
