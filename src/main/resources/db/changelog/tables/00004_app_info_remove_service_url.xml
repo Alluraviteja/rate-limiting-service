@@ -7,7 +7,6 @@
           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
     <changeSet id="0000000000006" author="System">
-        <dropUniqueConstraint tableName="app_info" constraintName="app_info_service_url_key"/>
         <dropColumn tableName="app_info" columnName="service_url"/>
 
         <rollback>
