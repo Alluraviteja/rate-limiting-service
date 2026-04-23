@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +42,13 @@ public class RateLimitController {
     })
     @PostMapping("/check")
     public ResponseEntity<RateLimitCheckResponse> check(@Valid @RequestBody RateLimitCheckRequest request) {
-        return ResponseEntity.ok(rateLimitService.check(request));
+        RateLimitCheckResponse result = rateLimitService.check(request);
+        HttpHeaders headers = new HttpHeaders();
+        if (result.limit() >= 0) {
+            headers.set("RateLimit-Limit", String.valueOf(result.limit()));
+            headers.set("RateLimit-Remaining", String.valueOf(result.remainingTokens()));
+            headers.set("RateLimit-Reset", String.valueOf(result.resetAfterSeconds()));
+        }
+        return ResponseEntity.ok().headers(headers).body(result);
     }
 }

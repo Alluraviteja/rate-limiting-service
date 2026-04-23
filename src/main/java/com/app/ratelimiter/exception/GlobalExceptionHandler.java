@@ -22,7 +22,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRateLimitExceeded(RateLimitExceededException ex) {
         log.warn("Rate limit exceeded: retryAfterSeconds={}", ex.getRetryAfterSeconds());
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(buildError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), null, ex.getRetryAfterSeconds()));
+                .header("RateLimit-Limit", String.valueOf(ex.getCapacity()))
+                .header("RateLimit-Remaining", "0")
+                .header("RateLimit-Reset", String.valueOf(ex.getRetryAfterSeconds()))
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(new ErrorResponse("rate_limit_exceeded", 429, "Too many requests", null, ex.getRetryAfterSeconds(), Instant.now()));
     }
 
     @ExceptionHandler(AppException.class)
@@ -70,6 +74,6 @@ public class GlobalExceptionHandler {
     }
 
     private ErrorResponse buildError(HttpStatus status, String message, Map<String, String> fieldErrors, Long retryAfterSeconds) {
-        return new ErrorResponse(status.name(), status.value(), message, fieldErrors, retryAfterSeconds, Instant.now());
+        return new ErrorResponse(status.name().toLowerCase(), status.value(), message, fieldErrors, retryAfterSeconds, Instant.now());
     }
 }

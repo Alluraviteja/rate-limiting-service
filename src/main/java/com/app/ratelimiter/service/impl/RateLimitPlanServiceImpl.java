@@ -117,7 +117,7 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
 
         String cacheKey = appInfoId + ":" + matched.getPathPattern();
         BucketConfiguration config = bucketConfigCache.computeIfAbsent(cacheKey, k -> buildConfig(matched));
-        return new ResolvedBucketConfig(config, matched.getPathPattern());
+        return new ResolvedBucketConfig(config, matched.getPathPattern(), matched.getCapacity());
     }
 
     private Optional<AppInfo> findByServiceNameOrPort(String identifier) {

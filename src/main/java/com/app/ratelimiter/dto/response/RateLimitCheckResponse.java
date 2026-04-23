@@ -11,14 +11,17 @@ public record RateLimitCheckResponse(
         @Schema(description = "Service name that was checked", example = "payments-service")
         String serviceName,
 
-        @Schema(description = "Full URL of the service for the API gateway to forward the request to", example = "http://payments-service:8081")
-        String serviceUrl,
-
         @Schema(description = "Whether the request was allowed to proceed", example = "true")
         boolean allowed,
 
-        @Schema(description = "Number of tokens remaining in the bucket after this check", example = "42")
+        @Schema(description = "Number of tokens remaining in the bucket after this check (-1 when no plan applies)", example = "42")
         long remainingTokens,
+
+        @Schema(description = "Bucket capacity (max tokens). Mirrors the RateLimit-Limit response header. -1 when no plan applies.", example = "100")
+        long limit,
+
+        @Schema(description = "Seconds until the bucket refills to full capacity. Mirrors the RateLimit-Reset response header. -1 when no plan applies.", example = "12")
+        long resetAfterSeconds,
 
         @Schema(description = "Human-readable reason for the decision", example = "Request allowed")
         String reason,

@@ -12,9 +12,6 @@ public record AppInfoResponse(
         @Schema(description = "Unique service name identifier", example = "payments-service")
         String serviceName,
 
-        @Schema(description = "Full URL where the service is running", example = "http://personal-website:8080")
-        String serviceUrl,
-
         @Schema(description = "Port the service is running on", example = "8080")
         Integer servicePort,
 

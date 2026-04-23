@@ -12,5 +12,6 @@
     <include file="db/changelog/tables/00001_app_info.xml"/>
     <include file="db/changelog/tables/00002_app_info_service_port.xml"/>
     <include file="db/changelog/tables/00003_rate_limit_log_enrich.xml"/>
+    <include file="db/changelog/tables/00004_app_info_remove_service_url.xml"/>
 
 </databaseChangeLog>
