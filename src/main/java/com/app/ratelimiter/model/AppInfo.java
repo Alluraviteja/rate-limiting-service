@@ -23,9 +23,6 @@ public class AppInfo extends BaseAuditEntity {
     @Column(name = "service_name", nullable = false, unique = true, length = 255)
     private String serviceName;
 
-    @Column(name = "service_url", nullable = false, length = 500)
-    private String serviceUrl;
-
     @Column(name = "service_port")
     private Integer servicePort;
 

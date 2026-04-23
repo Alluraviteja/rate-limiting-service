@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="0000000000006" author="System">
+        <dropUniqueConstraint tableName="app_info" constraintName="app_info_service_url_key"/>
+        <dropColumn tableName="app_info" columnName="service_url"/>
+
+        <rollback>
+            <addColumn tableName="app_info">
+                <column name="service_url" type="VARCHAR(500)">
+                    <constraints nullable="true"/>
+                </column>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

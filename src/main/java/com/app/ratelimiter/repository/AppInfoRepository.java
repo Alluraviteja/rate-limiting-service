@@ -12,6 +12,4 @@ public interface AppInfoRepository extends JpaRepository<AppInfo, Long> {
     Optional<AppInfo> findByServicePort(Integer servicePort);
 
     boolean existsByServiceName(String serviceName);
-
-    boolean existsByServiceUrl(String serviceUrl);
 }

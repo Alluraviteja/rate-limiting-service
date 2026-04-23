@@ -35,13 +35,13 @@ public class AppInfoController {
 
     private final AppInfoService appInfoService;
 
-    @Operation(summary = "Register an app", description = "Registers a new application. The serviceName and serviceUrl must be unique.")
+    @Operation(summary = "Register an app", description = "Registers a new application. The serviceName must be unique.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "App registered successfully",
                     content = @Content(schema = @Schema(implementation = AppInfoResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "App already registered with this serviceName or serviceUrl",
+            @ApiResponse(responseCode = "409", description = "App already registered with this serviceName",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
