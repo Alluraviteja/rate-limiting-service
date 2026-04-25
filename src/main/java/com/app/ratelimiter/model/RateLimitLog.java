@@ -60,4 +60,34 @@ public class RateLimitLog extends BaseAuditEntity {
 
     @Column(name = "redis_failed", nullable = false)
     private Boolean redisFailed;
+
+    @Column(name = "browser", length = 50)
+    private String browser;
+
+    @Column(name = "browser_version", length = 20)
+    private String browserVersion;
+
+    @Column(name = "os", length = 50)
+    private String os;
+
+    @Column(name = "os_version", length = 20)
+    private String osVersion;
+
+    @Column(name = "device_type", length = 10)
+    private String deviceType;
+
+    @Column(name = "is_bot", nullable = false)
+    private Boolean isBot;
+
+    @Column(name = "bot_name", length = 100)
+    private String botName;
+
+    @Column(name = "user_agent", columnDefinition = "TEXT")
+    private String userAgent;
+
+    @Column(name = "request_size")
+    private Long requestSize;
+
+    @Column(name = "referer", length = 2048)
+    private String referer;
 }

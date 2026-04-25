@@ -9,6 +9,7 @@ import com.app.ratelimiter.exception.ResourceNotFoundException;
 import com.app.ratelimiter.exception.ServiceUnavailableException;
 import com.app.ratelimiter.model.AppInfo;
 import com.app.ratelimiter.repository.AppInfoRepository;
+import com.app.ratelimiter.service.RateLimitAuditEntry;
 import com.app.ratelimiter.service.RateLimitLogService;
 import com.app.ratelimiter.service.RateLimitPlanService;
 import com.app.ratelimiter.service.RateLimitService;
@@ -50,31 +51,41 @@ public class RateLimitServiceImpl implements RateLimitService {
 
     @Override
     public RateLimitCheckResponse check(RateLimitCheckRequest request) {
-        String serviceIdentifier = request.serviceIdentifier();
-        String clientIp = request.clientIp();
-        String requestPath = request.requestPath();
-        String httpMethod = request.httpMethod();
-
-        String traceId = request.traceId();
         Instant requestAt = Instant.now();
 
-        AppInfo app = findByServiceNameOrPort(serviceIdentifier)
-                .orElseThrow(() -> new ResourceNotFoundException("No app registered for serviceIdentifier: " + serviceIdentifier));
+        AppInfo app = findByServiceNameOrPort(request.serviceIdentifier())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No app registered for serviceIdentifier: " + request.serviceIdentifier()));
 
-        Long appInfoId = app.getId();
+        Long appInfoId   = app.getId();
         String serviceName = app.getServiceName();
+
+        RateLimitAuditEntry.RateLimitAuditEntryBuilder auditBase = RateLimitAuditEntry.builder()
+                .appInfoId(appInfoId)
+                .clientIp(request.clientIp())
+                .httpMethod(request.httpMethod())
+                .requestPath(request.requestPath())
+                .traceId(request.traceId())
+                .requestAt(requestAt)
+                .browser(request.browser())
+                .os(request.os())
+                .deviceType(request.deviceType())
+                .isBot(Boolean.TRUE.equals(request.isBot()))
+                .botName(request.botName())
+                .requestSize(request.requestSize())
+                .referer(request.referer());
 
         ResolvedBucketConfig resolved;
         try {
-            resolved = planService.getBucketConfiguration(appInfoId, requestPath);
+            resolved = planService.getBucketConfiguration(appInfoId, request.requestPath());
         } catch (Exception e) {
             log.error("Failed to load bucket configuration for appInfoId={}: {}", appInfoId, e.getMessage());
             throw e;
         }
 
         if (!resolved.hasMatch()) {
-            safeLog(appInfoId, clientIp, false, "No rate limit plan configured", httpMethod, requestPath, -1L, traceId, 200, requestAt, null, false);
-            log.debug("No plan matched for serviceName={}, path={} — allowing request", serviceName, requestPath);
+            safeLog(auditBase.wasBlocked(false).reason("No rate limit plan configured").remainingTokens(-1L).responseCode(200).build());
+            log.debug("No plan matched for serviceName={}, path={} — allowing request", serviceName, request.requestPath());
             return new RateLimitCheckResponse(serviceName, true, -1, -1, -1, "No rate limit plan configured", null, Instant.now());
         }
 
@@ -85,35 +96,33 @@ public class RateLimitServiceImpl implements RateLimitService {
 
             if (probe.isConsumed()) {
                 long resetAfterSeconds = (long) Math.ceil(probe.getNanosToWaitForRefill() / 1_000_000_000.0);
-                safeLog(appInfoId, clientIp, false, null, httpMethod, requestPath, probe.getRemainingTokens(), traceId, 200, requestAt, null, false);
-                log.debug("Request allowed for serviceName={}, path={}, remaining={}", serviceName, requestPath, probe.getRemainingTokens());
+                safeLog(auditBase.wasBlocked(false).remainingTokens(probe.getRemainingTokens()).responseCode(200).build());
+                log.debug("Request allowed for serviceName={}, path={}, remaining={}", serviceName, request.requestPath(), probe.getRemainingTokens());
                 return new RateLimitCheckResponse(serviceName, true, probe.getRemainingTokens(), resolved.capacity(), resetAfterSeconds, null, resolved.matchedPattern(), Instant.now());
             }
 
             long retryAfterSeconds = (long) Math.ceil(probe.getNanosToWaitForRefill() / 1_000_000_000.0);
-            safeLog(appInfoId, clientIp, true, "Rate limit exceeded", httpMethod, requestPath, 0L, traceId, 429, requestAt, retryAfterSeconds, false);
-            log.warn("Rate limit exceeded for serviceName={}, path={}, clientIp={}, retryAfter={}s", serviceName, requestPath, clientIp, retryAfterSeconds);
+            safeLog(auditBase.wasBlocked(true).reason("Rate limit exceeded").remainingTokens(0L).responseCode(429).retryAfterSeconds(retryAfterSeconds).build());
+            log.warn("Rate limit exceeded for serviceName={}, path={}, clientIp={}, retryAfter={}s", serviceName, request.requestPath(), request.clientIp(), retryAfterSeconds);
             throw new RateLimitExceededException("Rate limit exceeded for serviceName: " + serviceName, retryAfterSeconds, resolved.capacity());
 
         } catch (RateLimitExceededException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Redis error for appInfoId={}, clientIp={}: {}", appInfoId, clientIp, e.getMessage());
-            return handleRedisFailure(serviceName, appInfoId, clientIp, requestPath, httpMethod, traceId, requestAt);
+            log.error("Redis error for appInfoId={}, clientIp={}: {}", appInfoId, request.clientIp(), e.getMessage());
+            return handleRedisFailure(serviceName, auditBase);
         }
     }
 
-    private RateLimitCheckResponse handleRedisFailure(String serviceName, Long appInfoId,
-                                                       String clientIp, String requestPath, String httpMethod,
-                                                       String traceId, Instant requestAt) {
+    private RateLimitCheckResponse handleRedisFailure(String serviceName, RateLimitAuditEntry.RateLimitAuditEntryBuilder auditBase) {
         FailureStrategy strategy = appProperties.getRatelimit().getRedis().getFailureStrategy();
         if (strategy == FailureStrategy.FAIL_CLOSED) {
-            safeLog(appInfoId, clientIp, true, "Redis unavailable - fail closed", httpMethod, requestPath, -1L, traceId, 503, requestAt, null, true);
+            safeLog(auditBase.wasBlocked(true).reason("Redis unavailable - fail closed").remainingTokens(-1L).responseCode(503).redisFailed(true).build());
             throw new ServiceUnavailableException("Rate limit service temporarily unavailable");
         }
-        safeLog(appInfoId, clientIp, false, "Redis unavailable - fail open", httpMethod, requestPath, -1L, traceId, 200, requestAt, null, true);
+        safeLog(auditBase.wasBlocked(false).reason("Redis unavailable - fail open").remainingTokens(-1L).responseCode(200).redisFailed(true).build());
         log.warn("Failing open for serviceName={} due to Redis unavailability", serviceName);
-        return new RateLimitCheckResponse(serviceName, true, -1, -1, -1, "Redis unavailable - fail open", requestPath, Instant.now());
+        return new RateLimitCheckResponse(serviceName, true, -1, -1, -1, "Redis unavailable - fail open", null, Instant.now());
     }
 
     private Optional<AppInfo> findByServiceNameOrPort(String identifier) {
@@ -128,14 +137,11 @@ public class RateLimitServiceImpl implements RateLimitService {
         }
     }
 
-    private void safeLog(Long appInfoId, String clientIp, boolean wasBlocked, String reason,
-                         String httpMethod, String requestPath, Long remainingTokens, String traceId,
-                         int responseCode, Instant requestAt, Long retryAfterSeconds, boolean redisFailed) {
+    private void safeLog(RateLimitAuditEntry entry) {
         try {
-            logService.log(appInfoId, clientIp, wasBlocked, reason, httpMethod, requestPath, remainingTokens, traceId,
-                    responseCode, requestAt, retryAfterSeconds, redisFailed);
+            logService.log(entry);
         } catch (Exception e) {
-            log.warn("Failed to write audit log for appInfoId={}: {}", appInfoId, e.getMessage());
+            log.warn("Failed to write audit log for appInfoId={}: {}", entry.getAppInfoId(), e.getMessage());
         }
     }
 }

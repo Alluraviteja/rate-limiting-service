@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="0000000000007" author="System">
+        <addColumn tableName="rate_limit_log">
+            <column name="browser" type="VARCHAR(50)"/>
+            <column name="browser_version" type="VARCHAR(20)"/>
+            <column name="os" type="VARCHAR(50)"/>
+            <column name="os_version" type="VARCHAR(20)"/>
+            <column name="device_type" type="VARCHAR(10)"/>
+            <column name="is_bot" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bot_name" type="VARCHAR(100)"/>
+            <column name="user_agent" type="TEXT"/>
+            <column name="request_size" type="BIGINT"/>
+            <column name="referer" type="VARCHAR(2048)"/>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="rate_limit_log" columnName="browser"/>
+            <dropColumn tableName="rate_limit_log" columnName="browser_version"/>
+            <dropColumn tableName="rate_limit_log" columnName="os"/>
+            <dropColumn tableName="rate_limit_log" columnName="os_version"/>
+            <dropColumn tableName="rate_limit_log" columnName="device_type"/>
+            <dropColumn tableName="rate_limit_log" columnName="is_bot"/>
+            <dropColumn tableName="rate_limit_log" columnName="bot_name"/>
+            <dropColumn tableName="rate_limit_log" columnName="user_agent"/>
+            <dropColumn tableName="rate_limit_log" columnName="request_size"/>
+            <dropColumn tableName="rate_limit_log" columnName="referer"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
