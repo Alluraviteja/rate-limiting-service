@@ -14,8 +14,8 @@ public record RateLimitCheckRequest(
         @Schema(description = "Client IP address (IPv4 or IPv6)", example = "1.2.3.4")
         @NotBlank @Size(max = 45) @Pattern(regexp = "^[\\d.:a-fA-F]+$", message = "must be a valid IP address") String clientIp,
 
-        @Schema(description = "Request path to match against plans. Null defaults to /**.", example = "/api/data")
-        @Size(max = 500) String requestPath,
+        @Schema(description = "Request path to match against plans.", example = "/api/data")
+        @NotBlank @Size(max = 500) String requestPath,
 
         @Schema(description = "HTTP method of the incoming request", example = "GET")
         @Size(max = 10) String httpMethod,
