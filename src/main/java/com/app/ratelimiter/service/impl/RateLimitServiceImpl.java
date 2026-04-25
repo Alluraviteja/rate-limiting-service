@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -35,6 +36,7 @@ public class RateLimitServiceImpl implements RateLimitService {
     private final AppInfoRepository appInfoRepository;
     private final LettuceBasedProxyManager<String> proxyManager;
     private final AppProperties appProperties;
+    private final ConcurrentHashMap<String, AppInfo> appInfoCache = new ConcurrentHashMap<>();
 
     public RateLimitServiceImpl(
             RateLimitPlanService planService,
@@ -84,9 +86,9 @@ public class RateLimitServiceImpl implements RateLimitService {
         }
 
         if (!resolved.hasMatch()) {
-            safeLog(auditBase.wasBlocked(false).reason("No rate limit plan configured").remainingTokens(-1L).responseCode(200).build());
-            log.debug("No plan matched for serviceName={}, path={} — allowing request", serviceName, request.requestPath());
-            return new RateLimitCheckResponse(serviceName, true, -1, -1, -1, "No rate limit plan configured", null, Instant.now());
+            safeLog(auditBase.wasBlocked(true).reason("No matching rate limit plan").remainingTokens(0L).responseCode(404).build());
+            log.warn("No matching plan for serviceName={}, path={} — blocking request", serviceName, request.requestPath());
+            throw new ResourceNotFoundException("No rate limit plan configured for path: " + request.requestPath());
         }
 
         String bucketKey = BUCKET_KEY_PREFIX + appInfoId + ":" + resolved.matchedPattern();
@@ -125,15 +127,37 @@ public class RateLimitServiceImpl implements RateLimitService {
         return new RateLimitCheckResponse(serviceName, true, -1, -1, -1, "Redis unavailable - fail open", null, Instant.now());
     }
 
+    @Override
+    public void evictAppInfoCache(String serviceName, Integer servicePort) {
+        appInfoCache.remove(serviceName);
+        if (servicePort != null) {
+            appInfoCache.remove(String.valueOf(servicePort));
+        }
+    }
+
     private Optional<AppInfo> findByServiceNameOrPort(String identifier) {
+        AppInfo cached = appInfoCache.get(identifier);
+        if (cached != null) {
+            return Optional.of(cached);
+        }
         Optional<AppInfo> byName = appInfoRepository.findByServiceName(identifier);
         if (byName.isPresent()) {
+            cacheAppInfo(byName.get());
             return byName;
         }
         try {
-            return appInfoRepository.findByServicePort(Integer.parseInt(identifier));
+            Optional<AppInfo> byPort = appInfoRepository.findByServicePort(Integer.parseInt(identifier));
+            byPort.ifPresent(this::cacheAppInfo);
+            return byPort;
         } catch (NumberFormatException e) {
             return Optional.empty();
+        }
+    }
+
+    private void cacheAppInfo(AppInfo appInfo) {
+        appInfoCache.put(appInfo.getServiceName(), appInfo);
+        if (appInfo.getServicePort() != null) {
+            appInfoCache.put(String.valueOf(appInfo.getServicePort()), appInfo);
         }
     }
 

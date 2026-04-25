@@ -95,7 +95,7 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
     @Override
     @Transactional(readOnly = true)
     public ResolvedBucketConfig getBucketConfiguration(Long appInfoId, String requestPath) {
-        String path = requestPath != null ? requestPath : DEFAULT_PATH_PATTERN;
+        String path = requestPath;
         List<RateLimitPlan> plans = planListCache.computeIfAbsent(appInfoId,
                 key -> planRepository.findAllByAppInfoIdAndEnabledTrue(key));
 

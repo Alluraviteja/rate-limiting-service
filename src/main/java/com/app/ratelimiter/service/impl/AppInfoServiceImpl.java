@@ -8,6 +8,7 @@ import com.app.ratelimiter.mapper.AppInfoMapper;
 import com.app.ratelimiter.model.AppInfo;
 import com.app.ratelimiter.repository.AppInfoRepository;
 import com.app.ratelimiter.service.AppInfoService;
+import com.app.ratelimiter.service.RateLimitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     private final AppInfoRepository appInfoRepository;
     private final AppInfoMapper mapper;
+    private final RateLimitService rateLimitService;
 
     @Override
     @Transactional
@@ -50,6 +52,7 @@ public class AppInfoServiceImpl implements AppInfoService {
     @Transactional
     public AppInfoResponse update(Long id, AppInfoRequest request) {
         AppInfo appInfo = findById(id);
+        rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
         appInfo.setServicePort(request.servicePort());
         appInfo.setDescription(request.description());
         log.info("App updated for serviceName={}", appInfo.getServiceName());
@@ -60,6 +63,7 @@ public class AppInfoServiceImpl implements AppInfoService {
     @Transactional
     public void delete(Long id) {
         AppInfo appInfo = findById(id);
+        rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
         appInfoRepository.delete(appInfo);
         log.info("App deleted for serviceName={}", appInfo.getServiceName());
     }
