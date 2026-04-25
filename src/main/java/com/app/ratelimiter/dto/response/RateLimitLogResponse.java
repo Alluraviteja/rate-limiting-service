@@ -48,5 +48,35 @@ public record RateLimitLogResponse(
         boolean redisFailed,
 
         @Schema(description = "UTC timestamp when the audit record was persisted")
-        Instant createdAt
+        Instant createdAt,
+
+        @Schema(description = "Browser name parsed from User-Agent", example = "Chrome")
+        String browser,
+
+        @Schema(description = "Browser major.minor version", example = "120.0")
+        String browserVersion,
+
+        @Schema(description = "Operating system name", example = "Windows")
+        String os,
+
+        @Schema(description = "Operating system version", example = "10/11")
+        String osVersion,
+
+        @Schema(description = "Device category: mobile, tablet, desktop, or bot", example = "desktop")
+        String deviceType,
+
+        @Schema(description = "Whether the request came from a bot", example = "false")
+        boolean isBot,
+
+        @Schema(description = "Bot name if identified (e.g. Googlebot), null otherwise", example = "Googlebot")
+        String botName,
+
+        @Schema(description = "Raw User-Agent string", example = "Mozilla/5.0 ...")
+        String userAgent,
+
+        @Schema(description = "Size of the original request body in bytes", example = "512")
+        Long requestSize,
+
+        @Schema(description = "Referer header from the original request", example = "https://google.com")
+        String referer
 ) {}

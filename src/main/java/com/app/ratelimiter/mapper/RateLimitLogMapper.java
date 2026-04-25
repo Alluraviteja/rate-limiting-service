@@ -22,7 +22,17 @@ public class RateLimitLogMapper {
                 entity.getRequestAt(),
                 entity.getRetryAfterSeconds(),
                 entity.getRedisFailed(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getBrowser(),
+                entity.getBrowserVersion(),
+                entity.getOs(),
+                entity.getOsVersion(),
+                entity.getDeviceType(),
+                Boolean.TRUE.equals(entity.getIsBot()),
+                entity.getBotName(),
+                entity.getUserAgent(),
+                entity.getRequestSize(),
+                entity.getReferer()
         );
     }
 }
