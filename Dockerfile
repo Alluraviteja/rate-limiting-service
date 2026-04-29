@@ -26,7 +26,40 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked \
     cp target/rate-limiting-service-*.war target/app.war
 
 # ============================================================
-# Stage 2: Runtime
+# Stage 2: Runtime — built from pre-compiled WAR (used by CD)
+# ============================================================
+FROM eclipse-temurin:21-jre-alpine AS runtime-prebuilt
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+COPY target/*.war app.war
+RUN chown appuser:appgroup app.war
+
+USER appuser
+
+ARG VERSION=unknown
+ARG GIT_COMMIT=unknown
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.title="rate-limiting-service"
+
+EXPOSE 8081
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget -qO- "http://localhost:${SERVER_PORT:-8081}/actuator/health" || exit 1
+
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:+UseG1GC", \
+  "-XX:+ExitOnOutOfMemoryError", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.war"]
+
+# ============================================================
+# Stage 3: Runtime — built from source (local dev / fallback)
 # ============================================================
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
