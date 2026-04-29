@@ -48,8 +48,8 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rate-limiting-service:cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rate-limiting-service:cache,mode=max
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
