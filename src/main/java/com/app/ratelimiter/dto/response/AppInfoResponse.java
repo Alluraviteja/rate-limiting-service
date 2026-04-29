@@ -21,6 +21,9 @@ public record AppInfoResponse(
         @Schema(description = "Whether this app is active", example = "true")
         boolean enabled,
 
+        @Schema(description = "Whether rate limiting is enforced per IP address", example = "false")
+        boolean perIpAddress,
+
         @Schema(description = "UTC timestamp when the app was registered")
         Instant createdAt,
 
