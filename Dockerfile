@@ -29,7 +29,6 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked \
 # ============================================================
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
-# Non-root user — never run as root in production
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
