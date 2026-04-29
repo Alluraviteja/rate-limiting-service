@@ -35,3 +35,10 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports/
           retention-days: 7
+
+      - name: Upload WAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-war
+          path: target/rate-limiting-service-*.war
+          retention-days: 1
