@@ -14,6 +14,7 @@ public class AppInfoMapper {
                 .servicePort(request.servicePort())
                 .description(request.description())
                 .enabled(false)
+                .perIpAddress(request.perIpAddress())
                 .build();
     }
 
@@ -24,6 +25,7 @@ public class AppInfoMapper {
                 entity.getServicePort(),
                 entity.getDescription(),
                 entity.getEnabled(),
+                entity.getPerIpAddress(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

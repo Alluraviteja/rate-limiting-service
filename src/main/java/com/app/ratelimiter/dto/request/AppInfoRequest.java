@@ -15,5 +15,8 @@ public record AppInfoRequest(
         @Min(1) @Max(65535) Integer servicePort,
 
         @Schema(description = "Optional description of the application", example = "Handles all payment transactions")
-        @Size(max = 1000) String description
+        @Size(max = 1000) String description,
+
+        @Schema(description = "Whether rate limiting is enforced per IP address", example = "false")
+        boolean perIpAddress
 ) {}

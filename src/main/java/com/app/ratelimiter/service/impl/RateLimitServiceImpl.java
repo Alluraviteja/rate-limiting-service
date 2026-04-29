@@ -91,7 +91,10 @@ public class RateLimitServiceImpl implements RateLimitService {
             throw new ResourceNotFoundException("No rate limit plan configured for path: " + request.requestPath());
         }
 
-        String bucketKey = BUCKET_KEY_PREFIX + appInfoId + ":" + resolved.matchedPattern();
+        String bucketKey = Boolean.TRUE.equals(app.getPerIpAddress())
+                ? BUCKET_KEY_PREFIX + appInfoId + ":" + resolved.matchedPattern() + ":" + request.clientIp()
+                : BUCKET_KEY_PREFIX + appInfoId + ":" + resolved.matchedPattern();
+        log.debug("Bucket key resolved for serviceName={}, perIpAddress={}, key={}", serviceName, app.getPerIpAddress(), bucketKey);
         try {
             BucketProxy bucket = proxyManager.builder().build(bucketKey, () -> resolved.config());
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);

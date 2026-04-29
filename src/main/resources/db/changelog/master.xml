@@ -14,5 +14,6 @@
     <include file="db/changelog/tables/00003_rate_limit_log_enrich.xml"/>
     <include file="db/changelog/tables/00004_app_info_remove_service_url.xml"/>
     <include file="db/changelog/tables/00005_rate_limit_log_ua.xml"/>
+    <include file="db/changelog/tables/00006_app_info_per_ip_address.xml"/>
 
 </databaseChangeLog>
