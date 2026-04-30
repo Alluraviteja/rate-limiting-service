@@ -43,7 +43,6 @@ LABEL org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${GIT_COMMIT}" \
       org.opencontainers.image.title="rate-limiting-service"
 
-EXPOSE 8081
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD wget -qO- "http://localhost:${SERVER_PORT:-8081}/actuator/health" || exit 1
