@@ -24,6 +24,9 @@ public record AppInfoResponse(
         @Schema(description = "Whether rate limiting is enforced per IP address", example = "false")
         boolean perIpAddress,
 
+        @Schema(description = "When true, requests are allowed through if Redis is unavailable. When false, a 503 is returned.", example = "true")
+        boolean failOpen,
+
         @Schema(description = "UTC timestamp when the app was registered")
         Instant createdAt,
 

@@ -8,4 +8,6 @@ public interface RateLimitService {
     RateLimitCheckResponse check(RateLimitCheckRequest request);
 
     void evictAppInfoCache(String serviceName, Integer servicePort);
+
+    int evictAllAppInfoCache();
 }

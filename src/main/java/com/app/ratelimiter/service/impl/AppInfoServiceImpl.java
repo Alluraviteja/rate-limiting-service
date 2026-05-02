@@ -55,6 +55,7 @@ public class AppInfoServiceImpl implements AppInfoService {
         rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
         appInfo.setServicePort(request.servicePort());
         appInfo.setDescription(request.description());
+        appInfo.setFailOpen(request.failOpen());
         log.info("App updated for serviceName={}", appInfo.getServiceName());
         return mapper.toResponse(appInfoRepository.save(appInfo));
     }

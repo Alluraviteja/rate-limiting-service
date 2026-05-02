@@ -15,6 +15,7 @@ public class AppInfoMapper {
                 .description(request.description())
                 .enabled(false)
                 .perIpAddress(request.perIpAddress())
+                .failOpen(request.failOpen())
                 .build();
     }
 
@@ -26,6 +27,7 @@ public class AppInfoMapper {
                 entity.getDescription(),
                 entity.getEnabled(),
                 entity.getPerIpAddress(),
+                entity.getFailOpen(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
