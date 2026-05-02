@@ -18,5 +18,8 @@ public record AppInfoRequest(
         @Size(max = 1000) String description,
 
         @Schema(description = "Whether rate limiting is enforced per IP address", example = "false")
-        boolean perIpAddress
+        boolean perIpAddress,
+
+        @Schema(description = "When true, requests are allowed through if Redis is unavailable. When false, a 503 is returned.", example = "true")
+        boolean failOpen
 ) {}

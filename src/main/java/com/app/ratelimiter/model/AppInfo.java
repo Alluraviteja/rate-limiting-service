@@ -36,4 +36,8 @@ public class AppInfo extends BaseAuditEntity {
     @Builder.Default
     @Column(name = "per_ip_address", nullable = false)
     private Boolean perIpAddress = true;
+
+    @Builder.Default
+    @Column(name = "fail_open", nullable = false)
+    private Boolean failOpen = true;
 }

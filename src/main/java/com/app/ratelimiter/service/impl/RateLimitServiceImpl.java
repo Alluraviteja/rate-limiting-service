@@ -1,7 +1,5 @@
 package com.app.ratelimiter.service.impl;
 
-import com.app.ratelimiter.config.AppProperties;
-import com.app.ratelimiter.config.FailureStrategy;
 import com.app.ratelimiter.dto.request.RateLimitCheckRequest;
 import com.app.ratelimiter.dto.response.RateLimitCheckResponse;
 import com.app.ratelimiter.exception.RateLimitExceededException;
@@ -13,12 +11,10 @@ import com.app.ratelimiter.service.RateLimitAuditEntry;
 import com.app.ratelimiter.service.RateLimitLogService;
 import com.app.ratelimiter.service.RateLimitPlanService;
 import com.app.ratelimiter.service.RateLimitService;
+import com.app.ratelimiter.service.RedisBucketService;
 import com.app.ratelimiter.service.ResolvedBucketConfig;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.distributed.BucketProxy;
-import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -34,21 +30,18 @@ public class RateLimitServiceImpl implements RateLimitService {
     private final RateLimitPlanService planService;
     private final RateLimitLogService logService;
     private final AppInfoRepository appInfoRepository;
-    private final LettuceBasedProxyManager<String> proxyManager;
-    private final AppProperties appProperties;
+    private final RedisBucketService redisBucketService;
     private final ConcurrentHashMap<String, AppInfo> appInfoCache = new ConcurrentHashMap<>();
 
     public RateLimitServiceImpl(
             RateLimitPlanService planService,
             RateLimitLogService logService,
             AppInfoRepository appInfoRepository,
-            @Lazy LettuceBasedProxyManager<String> proxyManager,
-            AppProperties appProperties) {
+            RedisBucketService redisBucketService) {
         this.planService = planService;
         this.logService = logService;
         this.appInfoRepository = appInfoRepository;
-        this.proxyManager = proxyManager;
-        this.appProperties = appProperties;
+        this.redisBucketService = redisBucketService;
     }
 
     @Override
@@ -96,8 +89,7 @@ public class RateLimitServiceImpl implements RateLimitService {
                 : BUCKET_KEY_PREFIX + appInfoId + ":" + resolved.matchedPattern();
         log.debug("Bucket key resolved for serviceName={}, perIpAddress={}, key={}", serviceName, app.getPerIpAddress(), bucketKey);
         try {
-            BucketProxy bucket = proxyManager.builder().build(bucketKey, () -> resolved.config());
-            ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+            ConsumptionProbe probe = redisBucketService.tryConsume(bucketKey, resolved);
 
             if (probe.isConsumed()) {
                 long resetAfterSeconds = (long) Math.ceil(probe.getNanosToWaitForRefill() / 1_000_000_000.0);
@@ -115,13 +107,12 @@ public class RateLimitServiceImpl implements RateLimitService {
             throw e;
         } catch (Exception e) {
             log.error("Redis error for appInfoId={}, clientIp={}: {}", appInfoId, request.clientIp(), e.getMessage());
-            return handleRedisFailure(serviceName, auditBase);
+            return handleRedisFailure(serviceName, app.getFailOpen(), auditBase);
         }
     }
 
-    private RateLimitCheckResponse handleRedisFailure(String serviceName, RateLimitAuditEntry.RateLimitAuditEntryBuilder auditBase) {
-        FailureStrategy strategy = appProperties.getRatelimit().getRedis().getFailureStrategy();
-        if (strategy == FailureStrategy.FAIL_CLOSED) {
+    private RateLimitCheckResponse handleRedisFailure(String serviceName, boolean failOpen, RateLimitAuditEntry.RateLimitAuditEntryBuilder auditBase) {
+        if (!failOpen) {
             safeLog(auditBase.wasBlocked(true).reason("Redis unavailable - fail closed").remainingTokens(-1L).responseCode(503).redisFailed(true).build());
             throw new ServiceUnavailableException("Rate limit service temporarily unavailable");
         }
@@ -136,6 +127,14 @@ public class RateLimitServiceImpl implements RateLimitService {
         if (servicePort != null) {
             appInfoCache.remove(String.valueOf(servicePort));
         }
+    }
+
+    @Override
+    public int evictAllAppInfoCache() {
+        int size = appInfoCache.size();
+        appInfoCache.clear();
+        log.info("AppInfo cache cleared: {} entries removed", size);
+        return size;
     }
 
     private Optional<AppInfo> findByServiceNameOrPort(String identifier) {

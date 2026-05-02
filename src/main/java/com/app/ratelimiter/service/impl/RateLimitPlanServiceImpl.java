@@ -146,6 +146,15 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
                 .build();
     }
 
+    @Override
+    public int evictAllPlanCaches() {
+        int total = planListCache.size() + bucketConfigCache.size();
+        planListCache.clear();
+        bucketConfigCache.clear();
+        log.info("Plan caches cleared: {} entries removed", total);
+        return total;
+    }
+
     private void evictCache(Long appInfoId, String pathPattern) {
         planListCache.remove(appInfoId);
         bucketConfigCache.remove(appInfoId + ":" + pathPattern);

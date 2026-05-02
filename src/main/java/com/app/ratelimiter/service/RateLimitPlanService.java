@@ -18,4 +18,6 @@ public interface RateLimitPlanService {
     void delete(Long id);
 
     ResolvedBucketConfig getBucketConfiguration(Long appInfoId, String requestPath);
+
+    int evictAllPlanCaches();
 }
