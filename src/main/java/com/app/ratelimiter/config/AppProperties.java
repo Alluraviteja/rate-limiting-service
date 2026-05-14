@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AppProperties {
 
     private Ratelimit ratelimit = new Ratelimit();
+    private Mcp mcp = new Mcp();
 
     @Getter
     @Setter
@@ -21,5 +22,11 @@ public class AppProperties {
         public static class Redis {
             private FailureStrategy failureStrategy = FailureStrategy.FAIL_OPEN;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Mcp {
+        private String secret = "";
     }
 }

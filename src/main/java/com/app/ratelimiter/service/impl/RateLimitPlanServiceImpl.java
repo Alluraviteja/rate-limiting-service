@@ -94,6 +94,14 @@ public class RateLimitPlanServiceImpl implements RateLimitPlanService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<RateLimitPlanResponse> getEnabledByAppInfoId(Long appInfoId) {
+        List<RateLimitPlan> plans = planListCache.computeIfAbsent(appInfoId,
+                key -> planRepository.findAllByAppInfoIdAndEnabledTrue(key));
+        return plans.stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ResolvedBucketConfig getBucketConfiguration(Long appInfoId, String requestPath) {
         String path = requestPath;
         List<RateLimitPlan> plans = planListCache.computeIfAbsent(appInfoId,
