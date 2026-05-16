@@ -40,6 +40,11 @@ spring:
           max-wait: 200ms
           time-between-eviction-runs: 30s
         shutdown-timeout: 100ms
+  ai:
+    mcp:
+      server:
+        name: rate-limiting-mcp-server
+        version: 1.0.0
 
 server:
   port: ${SERVER_PORT:8081}
@@ -53,13 +58,6 @@ app:
       secret: ${JWT_SECRET:local-dev-secret-do-not-use-in-production}
   mcp:
     secret: ${MCP_SECRET:local-dev-mcp-secret-do-not-use-in-production}
-
-spring:
-  ai:
-    mcp:
-      server:
-        name: rate-limiting-mcp-server
-        version: 1.0.0
 
 logging:
   level:
