@@ -42,12 +42,8 @@ public class RedisConfig {
         return RedisClient.create(uri);
     }
 
-    /**
-     * Single shared connection using String keys and byte[] values.
-     * Lettuce connections are thread-safe and multiplexed — one connection
-     * is sufficient for high concurrency.
-     */
-    @Lazy
+    // Shared connection for both Bucket4j (byte[] values) and MCP tools (SCAN/PING).
+    // SCAN and PING only operate on keys — the byte[] value codec is irrelevant for them.
     @Bean(destroyMethod = "close")
     public StatefulRedisConnection<String, byte[]> bucketRedisConnection(RedisClient lettuceRedisClient) {
         return lettuceRedisClient.connect(

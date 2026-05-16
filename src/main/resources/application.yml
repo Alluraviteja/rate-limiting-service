@@ -51,6 +51,15 @@ app:
   security:
     jwt:
       secret: ${JWT_SECRET:local-dev-secret-do-not-use-in-production}
+  mcp:
+    secret: ${MCP_SECRET:local-dev-mcp-secret-do-not-use-in-production}
+
+spring:
+  ai:
+    mcp:
+      server:
+        name: rate-limiting-mcp-server
+        version: 1.0.0
 
 logging:
   level:

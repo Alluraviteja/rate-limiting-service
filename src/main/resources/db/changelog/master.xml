@@ -16,5 +16,6 @@
     <include file="db/changelog/tables/00005_rate_limit_log_ua.xml"/>
     <include file="db/changelog/tables/00006_app_info_per_ip_address.xml"/>
     <include file="db/changelog/tables/00007_app_info_fail_strategy.xml"/>
+    <include file="db/changelog/tables/00008_rate_limit_log_composite_index.xml"/>
 
 </databaseChangeLog>

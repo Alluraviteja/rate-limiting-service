@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,8 @@ public class AppInfoServiceImpl implements AppInfoService {
     private final AppInfoMapper mapper;
     private final RateLimitService rateLimitService;
 
+    private final ConcurrentHashMap<Long, AppInfo> appInfoCache = new ConcurrentHashMap<>();
+
     @Override
     @Transactional
     public AppInfoResponse create(AppInfoRequest request) {
@@ -32,6 +36,7 @@ public class AppInfoServiceImpl implements AppInfoService {
             throw new ResourceAlreadyExistsException("App already registered with serviceName: " + request.serviceName());
         }
         AppInfo saved = appInfoRepository.save(mapper.toEntity(request));
+        appInfoCache.put(saved.getId(), saved);
         log.info("App registered with serviceName={}", saved.getServiceName());
         return mapper.toResponse(saved);
     }
@@ -45,19 +50,24 @@ public class AppInfoServiceImpl implements AppInfoService {
     @Override
     @Transactional(readOnly = true)
     public Page<AppInfoResponse> getAll(Pageable pageable) {
-        return appInfoRepository.findAll(pageable).map(mapper::toResponse);
+        Page<AppInfo> page = appInfoRepository.findAll(pageable);
+        page.forEach(app -> appInfoCache.put(app.getId(), app));
+        return page.map(mapper::toResponse);
     }
 
     @Override
     @Transactional
     public AppInfoResponse update(Long id, AppInfoRequest request) {
         AppInfo appInfo = findById(id);
+        appInfoCache.remove(id);
         rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
         appInfo.setServicePort(request.servicePort());
         appInfo.setDescription(request.description());
         appInfo.setFailOpen(request.failOpen());
-        log.info("App updated for serviceName={}", appInfo.getServiceName());
-        return mapper.toResponse(appInfoRepository.save(appInfo));
+        AppInfo saved = appInfoRepository.save(appInfo);
+        appInfoCache.put(saved.getId(), saved);
+        log.info("App updated for serviceName={}", saved.getServiceName());
+        return mapper.toResponse(saved);
     }
 
     @Override
@@ -66,11 +76,12 @@ public class AppInfoServiceImpl implements AppInfoService {
         AppInfo appInfo = findById(id);
         rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
         appInfoRepository.delete(appInfo);
+        appInfoCache.remove(id);
         log.info("App deleted for serviceName={}", appInfo.getServiceName());
     }
 
     private AppInfo findById(Long id) {
-        return appInfoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("App not found with id: " + id));
+        return appInfoCache.computeIfAbsent(id, key -> appInfoRepository.findById(key)
+                .orElseThrow(() -> new ResourceNotFoundException("App not found with id: " + key)));
     }
 }

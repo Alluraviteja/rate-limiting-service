@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="0000000000010" author="System">
+        <createIndex tableName="rate_limit_log"
+                     indexName="idx_rate_limit_log_app_info_id_request_at">
+            <column name="app_info_id"/>
+            <column name="request_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="rate_limit_log"
+                       indexName="idx_rate_limit_log_app_info_id_request_at"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
