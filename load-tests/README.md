@@ -1,16 +1,67 @@
 # k6 Load Tests
 
-## Install k6
+A single self-contained script (`load-test.sh`) that embeds all six k6 scenarios. No separate JS files needed — copy the script to any server with k6 installed and run it directly.
+
+---
+
+## Prerequisites
+
+Install k6 on the target server:
+
 ```bash
+# Ubuntu / Debian
+sudo gpg -k
+sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+  --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+  | sudo tee /etc/apt/sources.list.d/k6.list
+sudo apt-get update && sudo apt-get install k6
+
+# macOS
 brew install k6
 ```
 
+---
+
+## Copy to server and run
+
+**Step 1 — copy the script:**
+```bash
+scp load-tests/load-test.sh <user>@<server-ip>:~/
+```
+
+**Step 2 — SSH into the server:**
+```bash
+ssh <user>@<server-ip>
+```
+
+**Step 3 — make it executable:**
+```bash
+chmod +x load-test.sh
+```
+
+**Step 4 — run all tests:**
+```bash
+BASE_URL=http://localhost:8081 ./load-test.sh
+```
+
+**Run a single test:**
+```bash
+BASE_URL=http://localhost:8081 TEST=throughput ./load-test.sh
+BASE_URL=http://localhost:8081 TEST=latency    ./load-test.sh
+BASE_URL=http://localhost:8081 TEST=cache      ./load-test.sh
+BASE_URL=http://localhost:8081 TEST=accuracy   ./load-test.sh
+BASE_URL=http://localhost:8081 TEST=failopen   ./load-test.sh
+```
+
+---
+
 ## Setup — run once before any test
 
-Register the two test apps on the server (replace `BASE_URL`):
+Register the two test apps (replace `BASE_URL`):
 
 ```bash
-BASE_URL=http://<server-ip>:<port>
+BASE_URL=http://localhost:8081
 
 # App for throughput / latency / cache / fail-open tests (high-capacity plan)
 curl -s -X POST $BASE_URL/api/v1/apps \
@@ -33,89 +84,131 @@ curl -s -X POST $BASE_URL/api/v1/plans \
 
 ---
 
-## Running tests
+## Running from a remote machine via SSH tunnel
 
-### Run all tests in sequence (~10 min)
+If you want to run k6 locally and hit a remote server through a tunnel:
+
+**Terminal 1 — keep the tunnel open:**
 ```bash
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port>
+ssh -L 8081:<container-ip>:8081 <user>@<server-ip> -N
 ```
 
-### Run a single test via `main.js`
+**Terminal 2 — run the tests:**
 ```bash
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port> -e TEST=throughput
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port> -e TEST=latency
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port> -e TEST=cache
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port> -e TEST=accuracy
-k6 run load-tests/main.js -e BASE_URL=http://<server-ip>:<port> -e TEST=failopen
+SERVER_USER=<user> SERVER_IP=<server-ip> BASE_URL=http://localhost:8081 \
+  ./load-tests/load-test.sh
 ```
 
-### Run an individual file directly (also works)
+> Note: latency numbers will include SSH tunnel round-trip overhead. Running directly on the server (above) gives application-only latency.
+
+---
+
+## Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `BASE_URL` | `http://localhost:8081` | Target service URL |
+| `TEST` | _(all)_ | Run a single test: `throughput`, `latency`, `cache`, `accuracy`, `failopen` |
+| `SERVER_USER` | — | SSH user for remote spec detection and Redis control |
+| `SERVER_IP` | — | SSH host for remote spec detection and Redis control |
+| `REDIS_AUTO` | `true` | Set to `false` to skip automatic Redis stop/start |
+
+**Skip Redis automation:**
 ```bash
-k6 run load-tests/01_throughput.js -e BASE_URL=http://<server-ip>:<port>
-k6 run load-tests/02_latency_percentiles.js -e BASE_URL=http://<server-ip>:<port>
+REDIS_AUTO=false TEST=throughput BASE_URL=http://localhost:8081 ./load-test.sh
 ```
 
 ---
 
-## Scripts
+## Test sequence (full run)
 
-| File | TEST= name | What it measures | Resume metric |
-|---|---|---|---|
-| `01_throughput.js` | `throughput` | Max req/sec, ramps 50→100 VUs | `X,XXX req/sec at <1% error rate` |
-| `02_latency_percentiles.js` | `latency` | p50 / p95 / p99 at 20 VUs | `p99 Xms under 20 concurrent users` |
-| `03_cache_effectiveness.js` | `cache` | Cold (DB hit) vs warm (cached) latency | `Xx faster after cache warm-up` |
-| `04_concurrency_accuracy.js` | `accuracy` | No over-counting under 50-VU burst | `Zero race conditions, exact token limits` |
-| `05_redis_failure_failopen.js` | `failopen` | 100% availability when Redis is stopped | `99%+ uptime during Redis outage` |
+```
+  0s  → throughput        (3m 15s)   ramp 50→100 VUs
+210s  → latency           (2m)       20 VUs steady
+345s  → cache             (1m)       30 VUs, cold vs warm
+420s  → accuracy          (~30s)     50 VUs × 100 shared iterations
+465s  → failopen_baseline (30s)      10 VUs, Redis healthy
+496s  →   [30s gap]                  load-test.sh stops Redis automatically
+525s  → failopen_degraded (60s)      10 VUs, Redis down (fail-open path)
+585s  →   load-test.sh restarts Redis
+```
+
+### Fail-open test — fully automated
+
+`load-test.sh` stops and restarts Redis at the right times via `sudo systemctl`. No manual steps needed.
+
+If `load-test.sh` is interrupted mid-test (Ctrl+C), it restarts Redis automatically before exiting.
+
+If you need to control Redis manually:
+```bash
+sudo systemctl stop redis
+sudo systemctl start redis
+```
 
 ---
 
-## Test sequence (when running all via main.js)
+## What each scenario measures
 
-```
-  0s  → throughput  (3m 15s)   ramp 50→100 VUs
-210s  → latency     (2m)       20 VUs steady
-345s  → cache       (1m)       30 VUs, cold vs warm
-420s  → accuracy    (~30s)     50 VUs × 100 shared iterations
-465s  → failopen    (2m)       ⚠ stop Redis at ~500s mark (see below)
-```
-
-### Fail-open test — manual step required
-
-When the `failopen` scenario starts (~7m 45s into the full run), SSH into the server and stop Redis:
-
-```bash
-docker stop redis
-# wait for the scenario to finish (~2 min), then restore:
-docker start redis
-```
+| TEST= name | What it measures |
+|---|---|
+| `throughput` | Max req/sec — ramps 50→100 VUs over 3m 15s |
+| `latency` | Clean p50/p95/p99 at 20 VUs steady, no throughput pressure |
+| `cache` | Cold (first DB lookup) vs warm (in-process cache) latency |
+| `accuracy` | 50 VUs fire 100 shared requests at a 50-token bucket — verifies no over-count |
+| `failopen` | Baseline (Redis up) then degraded (Redis down) — verifies 100% availability |
 
 ---
 
 ## Reading the summary
 
-At the end of every run `main.js` prints a results box:
+At the end of every run the script prints a results box and saves it to `results/run-<timestamp>.txt`:
 
 ```
 ╔══════════════════════════════════════════════════════╗
 ║                  RESULTS SUMMARY                    ║
 ╠══════════════════════════════════════════════════════╣
-║  Total requests    : 48320                          ║
-║  Req/sec (avg)     : 412.3 req/s                    ║
+║  Run at            : 2026-05-19T23:15:35.233Z      ║
+║  Test              : all                           ║
 ╠══════════════════════════════════════════════════════╣
-║  Latency p50       : 18.4 ms                        ║
-║  Latency p95       : 67.2 ms                        ║
-║  Latency p99       : 124.5 ms                       ║
+║                  SERVER SPECS                        ║
 ╠══════════════════════════════════════════════════════╣
-║  Cache cold p50    : 45.2 ms                        ║
-║  Cache warm p50    : 12.1 ms                        ║
-║  Cache speedup     : 3.7x                           ║
+║  CPU               : 3 vCPU                        ║
+║  RAM               : 3.7Gi                         ║
+║  Disk              : 75G                           ║
+║  OS                : Ubuntu 22.04.5 LTS            ║
+║  Notes             : Local Linux machine           ║
 ╠══════════════════════════════════════════════════════╣
-║  Tokens allowed    : 50 / 50 capacity               ║
-║  Tokens blocked    : 50                             ║
-║  Accuracy          : PASS (no over-count)           ║
+║                  PERFORMANCE                         ║
 ╠══════════════════════════════════════════════════════╣
-║  Fail-open rate    : 100.00% success                ║
+║  Total requests    : 635870                        ║
+║  Req/sec (avg)     : 1086.9 req/s                  ║
 ╠══════════════════════════════════════════════════════╣
-║  Error rate        : 0.00%                          ║
+║  Latency p50       : 12.3 ms                       ║
+║  Latency p90       : 73.2 ms                       ║
+║  Latency p95       : 97.4 ms                       ║
+║  Latency p99       : 162.6 ms                      ║
+╠══════════════════════════════════════════════════════╣
+║              CACHE EFFECTIVENESS                     ║
+╠══════════════════════════════════════════════════════╣
+║  Cache cold p50    : 22.5 ms                       ║
+║  Cache warm p50    : 15.0 ms                       ║
+║  Cache speedup     : 1.5x faster after cache warm-up║
+╠══════════════════════════════════════════════════════╣
+║              CONCURRENCY ACCURACY                    ║
+╠══════════════════════════════════════════════════════╣
+║  Total requests    : 100                           ║
+║  Tokens allowed    : 50 / 50 capacity              ║
+║  Tokens blocked    : 50                            ║
+║  Accuracy          : PASS (no over-count)          ║
+╠══════════════════════════════════════════════════════╣
+║              REDIS FAIL-OPEN RESILIENCE              ║
+╠══════════════════════════════════════════════════════╣
+║  Fail-open success : 100.00%                       ║
+║  Baseline p50      : 5.0 ms (Redis UP)             ║
+║  Degraded p50      : 4.0 ms (Redis DOWN)           ║
+╠══════════════════════════════════════════════════════╣
+║  Overall error rate: 0.00%                         ║
 ╚══════════════════════════════════════════════════════╝
 ```
+
+> The degraded p50 (4.0 ms) is faster than the healthy baseline (5.0 ms) because when the circuit breaker opens, the service bypasses the Redis call entirely — the Redis round-trip itself is the dominant cost on the hot path.
