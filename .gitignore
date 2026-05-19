@@ -39,6 +39,10 @@ build/
 *.log
 logs/
 
+### k6 results — local only ###
+load-tests/results/*.txt
+load-tests/results/*.json
+
 ### Secrets / local overrides — never commit these ###
 .env
 .env.*
