@@ -11,6 +11,9 @@ public record AppInfoRequest(
         @Schema(description = "Unique service name identifier", example = "payments-service")
         @NotBlank @Size(max = 255) String serviceName,
 
+        @Schema(description = "Human-readable display name for the application", example = "Payments Service")
+        @NotBlank @Size(max = 255) String displayName,
+
         @Schema(description = "Port the service is running on", example = "8080")
         @Min(1) @Max(65535) Integer servicePort,
 

@@ -11,6 +11,7 @@ public class AppInfoMapper {
     public AppInfo toEntity(AppInfoRequest request) {
         return AppInfo.builder()
                 .serviceName(request.serviceName())
+                .displayName(request.displayName())
                 .servicePort(request.servicePort())
                 .description(request.description())
                 .enabled(false)
@@ -23,6 +24,7 @@ public class AppInfoMapper {
         return new AppInfoResponse(
                 entity.getId(),
                 entity.getServiceName(),
+                entity.getDisplayName(),
                 entity.getServicePort(),
                 entity.getDescription(),
                 entity.getEnabled(),

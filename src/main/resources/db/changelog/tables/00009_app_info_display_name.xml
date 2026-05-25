@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="0000000000010" author="System">
+        <addColumn tableName="app_info">
+            <column name="display_name" type="VARCHAR(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Backfill existing rows with the service_name value -->
+        <update tableName="app_info">
+            <column name="display_name" valueComputed="service_name"/>
+        </update>
+
+        <!-- Drop the temporary default so new rows must supply the value -->
+        <dropDefaultValue tableName="app_info" columnName="display_name"/>
+
+        <rollback>
+            <dropColumn tableName="app_info" columnName="display_name"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

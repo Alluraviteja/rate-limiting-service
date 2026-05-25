@@ -61,6 +61,7 @@ public class AppInfoServiceImpl implements AppInfoService {
         AppInfo appInfo = findById(id);
         appInfoCache.remove(id);
         rateLimitService.evictAppInfoCache(appInfo.getServiceName(), appInfo.getServicePort());
+        appInfo.setDisplayName(request.displayName());
         appInfo.setServicePort(request.servicePort());
         appInfo.setDescription(request.description());
         appInfo.setFailOpen(request.failOpen());

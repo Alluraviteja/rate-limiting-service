@@ -5,6 +5,7 @@ import java.util.List;
 public record AppDetail(
         Long id,
         String serviceName,
+        String displayName,
         Integer servicePort,
         String description,
         Boolean enabled,
