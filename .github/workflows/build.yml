@@ -44,6 +44,7 @@ jobs:
               --restart always \
               --add-host=host.docker.internal:host-gateway \
               --network ${{ secrets.DOCKER_NETWORK }} \
+              -e SPRING_PROFILES_ACTIVE=prod \
               -e SERVER_PORT=${{ secrets.CONTAINER_PORT }} \
               -e DB_URL=${{ secrets.DB_URL }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
@@ -51,7 +52,7 @@ jobs:
               -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
               -e REDIS_PORT=${{ secrets.REDIS_PORT }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e LOG_LEVEL=${{ secrets.LOG_LEVEL }} \
+              -e MCP_SECRET=${{ secrets.MCP_SECRET }} \
               $IMAGE
 
             # Verify container is running
@@ -68,6 +69,7 @@ jobs:
                   --restart always \
                   --add-host=host.docker.internal:host-gateway \
                   --network ${{ secrets.DOCKER_NETWORK }} \
+                  -e SPRING_PROFILES_ACTIVE=prod \
                   -e SERVER_PORT=${{ secrets.CONTAINER_PORT }} \
                   -e DB_URL=${{ secrets.DB_URL }} \
                   -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
@@ -75,7 +77,7 @@ jobs:
                   -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
                   -e REDIS_PORT=${{ secrets.REDIS_PORT }} \
                   -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-                  -e LOG_LEVEL=${{ secrets.LOG_LEVEL }} \
+                  -e MCP_SECRET=${{ secrets.MCP_SECRET }} \
                   $PREVIOUS_IMAGE
               else
                 echo "No previous image to roll back to — this was the first deploy"
