@@ -1,22 +1,18 @@
 spring:
   application:
     name: rate-limiting-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/rate_limiter}
-    username: ${DB_USERNAME:app_user}
-    password: ${DB_PASSWORD:app_password}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: HikariPool
-      maximum-pool-size: 20
-      minimum-idle: 5
       idle-timeout: 300000
       max-lifetime: 1800000
       connection-timeout: 30000
       keepalive-time: 60000
       validation-timeout: 5000
       auto-commit: false
-      leak-detection-threshold: ${HIKARI_LEAK_THRESHOLD:0}
   liquibase:
     change-log: classpath:db/changelog/master.xml
     enabled: true
@@ -27,19 +23,6 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      connect-timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 20
-          max-idle: 5
-          min-idle: 2
-          max-wait: 200ms
-          time-between-eviction-runs: 30s
-        shutdown-timeout: 100ms
   ai:
     mcp:
       server:
@@ -48,17 +31,6 @@ spring:
 
 server:
   port: ${SERVER_PORT:8081}
-
-app:
-  security:
-    jwt:
-      secret: ${JWT_SECRET:local-dev-secret-do-not-use-in-production}
-  mcp:
-    secret: ${MCP_SECRET:local-dev-mcp-secret-do-not-use-in-production}
-
-logging:
-  level:
-    root: ${LOG_LEVEL:INFO}
 
 springdoc:
   swagger-ui:
@@ -89,13 +61,8 @@ resilience4j:
           - io.lettuce.core.RedisException
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
   endpoint:
     health:
-      show-details: always
       probes:
         enabled: true
       group:
