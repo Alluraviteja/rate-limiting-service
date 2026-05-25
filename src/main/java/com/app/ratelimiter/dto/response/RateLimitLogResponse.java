@@ -44,7 +44,7 @@ public record RateLimitLogResponse(
         @Schema(description = "Seconds until the next request will be allowed — only present on 429 responses", example = "14")
         Long retryAfterSeconds,
 
-        @Schema(description = "Whether this event was caused by a Redis failure (fail-open or fail-closed)", example = "false")
+        @Schema(description = "Whether this event was caused by a Redis failure", example = "false")
         boolean redisFailed,
 
         @Schema(description = "UTC timestamp when the audit record was persisted")

@@ -6,6 +6,5 @@ public record ServiceHealthResult(
         String status,
         String database,
         String redis,
-        String redisFailureStrategy,
         Instant checkedAt
 ) {}

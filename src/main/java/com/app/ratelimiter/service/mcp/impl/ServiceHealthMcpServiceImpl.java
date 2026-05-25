@@ -1,10 +1,7 @@
 package com.app.ratelimiter.service.mcp.impl;
 
-import com.app.ratelimiter.config.AppProperties;
-import com.app.ratelimiter.config.FailureStrategy;
 import com.app.ratelimiter.mcp.dto.RedisFailureStats;
 import com.app.ratelimiter.mcp.dto.ServiceHealthResult;
-import com.app.ratelimiter.model.AppInfo;
 import com.app.ratelimiter.model.RateLimitLog;
 import com.app.ratelimiter.repository.AppInfoRepository;
 import com.app.ratelimiter.repository.RateLimitLogRepository;
@@ -27,14 +24,9 @@ public class ServiceHealthMcpServiceImpl implements ServiceHealthMcpService {
     private static final String STATUS_HEALTHY = "healthy";
     private static final String STATUS_DEGRADED = "degraded";
     private static final String STATUS_UNHEALTHY = "unhealthy";
-    private static final String FAIL_OPEN_INTERPRETATION =
-            "Block rates may be understated — Redis was unavailable during this window";
-    private static final String NORMAL_INTERPRETATION = "Redis operating normally in this window";
-
     private final AppInfoRepository appInfoRepository;
     private final RateLimitLogRepository logRepository;
     private final StatefulRedisConnection<String, byte[]> bucketRedisConnection;
-    private final AppProperties appProperties;
 
     @Override
     public ServiceHealthResult getServiceHealth() {
@@ -42,9 +34,7 @@ public class ServiceHealthMcpServiceImpl implements ServiceHealthMcpService {
         String dbStatus = checkDatabase();
         String redisStatus = checkRedis();
         String overall = determineOverallStatus(dbStatus, redisStatus);
-        String failureStrategy = appProperties.getRatelimit().getRedis().getFailureStrategy() == FailureStrategy.FAIL_OPEN
-                ? "fail-open" : "fail-closed";
-        return new ServiceHealthResult(overall, dbStatus, redisStatus, failureStrategy, checkedAt);
+        return new ServiceHealthResult(overall, dbStatus, redisStatus, checkedAt);
     }
 
     @Override
@@ -57,10 +47,7 @@ public class ServiceHealthMcpServiceImpl implements ServiceHealthMcpService {
         int redisFailures = (int) logs.stream().filter(l -> Boolean.TRUE.equals(l.getRedisFailed())).count();
         double failurePct = total == 0 ? 0.0 : Math.round((redisFailures * 100.0 / total) * 100.0) / 100.0;
 
-        String failureStrategy = resolveFailureStrategy(appInfoId);
-        String interpretation = buildInterpretation(failureStrategy, redisFailures);
-
-        return new RedisFailureStats(windowMinutes, total, redisFailures, failurePct, failureStrategy, interpretation);
+        return new RedisFailureStats(windowMinutes, total, redisFailures, failurePct);
     }
 
     private String checkDatabase() {
@@ -100,23 +87,5 @@ public class ServiceHealthMcpServiceImpl implements ServiceHealthMcpService {
             return logRepository.findRecentLogs(appInfoId, cutoff, HEALTH_LOG_LIMIT);
         }
         return logRepository.findRecentLogsAllApps(cutoff, HEALTH_LOG_LIMIT);
-    }
-
-    private String resolveFailureStrategy(Long appInfoId) {
-        if (appInfoId != null) {
-            return appInfoRepository.findById(appInfoId)
-                    .map(AppInfo::getFailOpen)
-                    .map(fo -> Boolean.TRUE.equals(fo) ? "fail-open" : "fail-closed")
-                    .orElse("fail-open");
-        }
-        return appProperties.getRatelimit().getRedis().getFailureStrategy() == FailureStrategy.FAIL_OPEN
-                ? "fail-open" : "fail-closed";
-    }
-
-    private String buildInterpretation(String failureStrategy, int redisFailures) {
-        if ("fail-open".equals(failureStrategy) && redisFailures > 0) {
-            return FAIL_OPEN_INTERPRETATION;
-        }
-        return NORMAL_INTERPRETATION;
     }
 }

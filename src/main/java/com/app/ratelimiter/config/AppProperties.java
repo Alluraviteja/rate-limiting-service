@@ -9,20 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
-    private Ratelimit ratelimit = new Ratelimit();
     private Mcp mcp = new Mcp();
-
-    @Getter
-    @Setter
-    public static class Ratelimit {
-        private Redis redis = new Redis();
-
-        @Getter
-        @Setter
-        public static class Redis {
-            private FailureStrategy failureStrategy = FailureStrategy.FAIL_OPEN;
-        }
-    }
 
     @Getter
     @Setter
