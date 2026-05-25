@@ -28,6 +28,7 @@ spring:
       server:
         name: rate-limiting-mcp-server
         version: 1.0.0
+        sse-endpoint: /mcp/sse
 
 server:
   port: ${SERVER_PORT:8081}
