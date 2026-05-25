@@ -12,6 +12,9 @@ public record AppInfoResponse(
         @Schema(description = "Unique service name identifier", example = "payments-service")
         String serviceName,
 
+        @Schema(description = "Human-readable display name for the application", example = "Payments Service")
+        String displayName,
+
         @Schema(description = "Port the service is running on", example = "8080")
         Integer servicePort,
 

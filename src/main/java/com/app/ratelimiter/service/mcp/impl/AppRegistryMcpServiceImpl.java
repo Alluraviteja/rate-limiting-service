@@ -40,14 +40,14 @@ public class AppRegistryMcpServiceImpl implements AppRegistryMcpService {
 
     private AppSummary toAppSummary(AppInfoResponse app) {
         return new AppSummary(
-                app.id(), app.serviceName(), app.servicePort(),
+                app.id(), app.serviceName(), app.displayName(), app.servicePort(),
                 app.description(), app.enabled(), app.perIpAddress(), app.failOpen()
         );
     }
 
     private AppDetail toAppDetail(AppInfoResponse app, List<PlanSummary> plans) {
         return new AppDetail(
-                app.id(), app.serviceName(), app.servicePort(),
+                app.id(), app.serviceName(), app.displayName(), app.servicePort(),
                 app.description(), app.enabled(), app.perIpAddress(), app.failOpen(),
                 plans
         );
