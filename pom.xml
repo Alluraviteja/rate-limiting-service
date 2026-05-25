@@ -29,7 +29,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<spring-ai.version>2.0.0-M6</spring-ai.version>
+		<spring-ai.version>2.0.0-M7</spring-ai.version>
 	</properties>
 
 	<dependencyManagement>
@@ -159,6 +159,15 @@
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+		</dependency>
+
+		<!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-autoconfigure-mcp-server-common -->
+		<!-- Required explicitly in M7: the webmvc starter no longer pulls this in transitively -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-autoconfigure-mcp-server-common</artifactId>
+			<version>2.0.0-M7</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<!-- Testcontainers -->
