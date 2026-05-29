@@ -28,7 +28,7 @@ public class RateLimitLog extends BaseAuditEntity {
     @Column(name = "app_info_id")
     private Long appInfoId;
 
-    @Column(name = "client_ip", nullable = false, length = 45)
+    @Column(name = "client_ip", nullable = false, length = 100)
     private String clientIp;
 
     @Column(name = "was_blocked", nullable = false)

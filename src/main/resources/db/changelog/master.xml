@@ -18,5 +18,6 @@
     <include file="db/changelog/tables/00007_app_info_fail_strategy.xml"/>
     <include file="db/changelog/tables/00008_rate_limit_log_composite_index.xml"/>
     <include file="db/changelog/tables/00009_app_info_display_name.xml"/>
+    <include file="db/changelog/tables/00010_rate_limit_log_client_ip_length.xml"/>
 
 </databaseChangeLog>

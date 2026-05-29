@@ -12,7 +12,7 @@ public record RateLimitCheckRequest(
         @NotBlank @Size(max = 255) String serviceIdentifier,
 
         @Schema(description = "Client IP address (IPv4 or IPv6)", example = "1.2.3.4")
-        @NotBlank @Size(max = 45) @Pattern(regexp = "^[\\d.:a-fA-F]+$", message = "must be a valid IP address") String clientIp,
+        @NotBlank @Size(max = 100) String clientIp,
 
         @Schema(description = "Request path to match against plans.", example = "/api/data")
         @NotBlank @Size(max = 500) String requestPath,
